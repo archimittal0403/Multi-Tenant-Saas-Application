@@ -352,7 +352,10 @@ $section_id=isset($_GET['section'])?$_GET['section']:3;
    </div>
 </div>
 </div>
-
+<a href="generate_timetable.php?class=<?php echo $class_id; ?>&section=<?php echo $section_id; ?>" 
+   class="btn btn-primary mb-3" target="_blank">
+   Generate PDF
+</a>
 <div class="card">
     <div class="card-body">
        <form action="timetable.php" method="post">

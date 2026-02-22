@@ -91,17 +91,11 @@ function data_output($query, $type='object'){
     }
     return $output;
 }
-
 function get_user_data($user_id,$type='object'){
     global $con;
     $query = mysqli_query($con,"SELECT * FROM accounts WHERE id = $user_id");
   return data_output($query,$type);
 }
-
-function get_post_title($post_id=''){
-
-}
-
 function get_users($args = array(),$type ='object'){
     global $con;
       $condition = "";
@@ -119,7 +113,6 @@ function get_users($args = array(),$type ='object'){
  $query= mysqli_query($con,"SELECT * FROM accounts $condition");
  return data_output($query, $type);
 }
-
 
 function get_user_metadata($user_id){
     global $con;
@@ -149,5 +142,4 @@ $query=mysqli_query($con,"SELECT * FROM usermeta WHERE `user_id`='$user_id' AND 
 
 
 }
-?>
 ?>
