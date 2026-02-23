@@ -9,7 +9,7 @@ if(isset($_POST['submit'])){
   $period_id=isset($_POST['period_id'])?$_POST['period_id']:'';
   $day_name=isset($_POST['day_name'])?$_POST['day_name']:'';
   $subject_id=isset($_POST['subject_id'])?$_POST['subject_id']:'';
-  $date_add=('Y-m-d g:i:s');
+  $date_add=('Y-m-d H:i:s');
   $status='publish';
   $author=1;
   $type='timetable';
@@ -61,37 +61,58 @@ $subject_name = $_POST['subject_name'][$day][$period_id];
 
             // Get teacher id
             $teacher_id = 0;
-            $select_teacher = mysqli_query($con,"SELECT id FROM accounts WHERE Name='$teacher_name'");
-            if(mysqli_num_rows($select_teacher)>0){
-                $teacher_id = mysqli_fetch_assoc($select_teacher)['id'];
-            }
+          
+            $select_teacher = $con->prepare("SELECT id FROM accounts WHERE Name=?");
+            $select_teacher->bind_param("s",$teacher_name);
+            $select_teacher->execute();
+       $teacher_result = $select_teacher->get_result();
+if ($row = $teacher_result->fetch_assoc()) {
+    $teacher_id = $row['id'];
+}
 
             // Get subject id
             $subject_id = 0;
-            $select_subject = mysqli_query($con,"SELECT id FROM courses WHERE name='$subject_name'");
-            if(mysqli_num_rows($select_subject)>0){
-                $subject_id = mysqli_fetch_assoc($select_subject)['id'];
-            }
-
+          
+            $select_subject = $con->prepare("SELECT id FROM courses WHERE name=?");
+            $select_subject->bind_param("s",$subject_name);
+            $select_subject->execute();
+            $subject_result=$select_subject->get_result();
+            if ($row = $subject_result->fetch_assoc()) {
+    $subject_id = $row['id'];
+}
             // Check existing record
-            $check=mysqli_query($con,"SELECT p.id FROM posts p 
-                INNER JOIN metadata m1 ON m1.item_id=p.id AND m1.meta_key='class' AND m1.meta_value='$class_id'
-                INNER JOIN metadata m2 ON m2.item_id=p.id AND m2.meta_key='section' AND m2.meta_value='$section_id'
-                INNER JOIN metadata m3 ON m3.item_id=p.id AND m3.meta_key='day_name' AND m3.meta_value='$day'
-                INNER JOIN metadata m4 ON m4.item_id=p.id AND m4.meta_key='period_id' AND m4.meta_value='$period_id'
+            $check=$con->prepare("SELECT p.id FROM posts p 
+                INNER JOIN metadata m1 ON m1.item_id=p.id AND m1.meta_key='class' AND m1.meta_value=?
+                INNER JOIN metadata m2 ON m2.item_id=p.id AND m2.meta_key='section' AND m2.meta_value=?
+                INNER JOIN metadata m3 ON m3.item_id=p.id AND m3.meta_key='day_name' AND m3.meta_value=?
+                INNER JOIN metadata m4 ON m4.item_id=p.id AND m4.meta_key='period_id' AND m4.meta_value=?
                 WHERE p.type='timetable' AND p.status='publish'");
+                $check->bind_param("iisi",$class_id,$section_id,$day,$period_id);
+                $check->execute();
+                $check_result=$check->get_result();
 
-            if(mysqli_num_rows($check)>0){
-
-                $item_id=mysqli_fetch_assoc($check)['id'];
+            if($check_result->num_rows>0){
+$item_row=$check_result->fetch_assoc();
+                $item_id=$item_row['id'];
 if($teacher_id>0){
-                mysqli_query($con,"UPDATE metadata SET meta_value='$teacher_id' 
-                    WHERE item_id='$item_id' AND meta_key='teacher_id'");
+             $update_teacher = $con->prepare("
+    UPDATE metadata 
+    SET meta_value = ? 
+    WHERE item_id = ? 
+    AND meta_key = 'teacher_id'
+");
+
+$update_teacher->bind_param("ii", $teacher_id, $item_id);
+$update_teacher->execute();
+
+                    
 }
 if($subject_id>0){
 
-                mysqli_query($con,"UPDATE metadata SET meta_value='$subject_id' 
-                    WHERE item_id='$item_id' AND meta_key='subject_id'");
+            $update_subject=$con->prepare("UPDATE metadata SET meta_value=? 
+                    WHERE item_id=? AND meta_key='subject_id'");
+                    $update_subject->bind_param("ii",$subject_id,$item_id);
+                    $update_subject->execute();
 }
 
             } else {
@@ -436,8 +457,11 @@ $query->execute();
   <input type="text" name="subject_name[<?php echo $day; ?>][<?php echo $period->id; ?>]" class="form-control" value="
   <?php 
   $subject_id=get_meta_value($tt->id,'subject_id');
-  $subject=mysqli_query($con,"SELECT name FROM `courses` WHERE id='$subject_id'");
-  while($row_fetch=mysqli_fetch_assoc($subject)){
+  $subject=$con->prepare("SELECT name FROM `courses` WHERE id=?");
+  $subject->bind_param("i",$subject_id);
+  $subject->execute();
+  $subject_result=$subject->get_result();
+  while($row_fetch=$subject_result->fetch_assoc()){
     $subject_name=$row_fetch['name'];
   }
   echo !empty($subject_name)?$subject_name:'';

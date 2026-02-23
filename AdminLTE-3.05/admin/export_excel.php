@@ -16,9 +16,11 @@ $sheet->setCellValue('B1','Student_Name');
 $sheet->setCellValue('C1','Marks');
 
 //fetch data from database
-$select=mysqli_query($con,"SELECT rm.student_id,s.Name,rm.marks FROM result_marks as rm JOIN accounts as s ON rm.student_id=s.id");
+$select=$con->prepare("SELECT rm.student_id,s.Name,rm.marks FROM result_marks as rm JOIN accounts as s ON rm.student_id=s.id");
+$select->execute();
+$select_result=$select->get_result();
 $row=2;
-while($data=mysqli_fetch_assoc($select)){
+while($data=$select_result->fetch_assoc()){
 $sheet->setCellValue('A'.$row,$data['student_id']);
 $sheet->setCellValue('B'.$row,$data['Name']);
 $sheet->setCellValue('c'.$row,$data['marks']);

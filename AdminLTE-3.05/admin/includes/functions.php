@@ -7,6 +7,62 @@ if (!function_exists('get_the_teachers')) {
 }
 
 
+function get_timetable($day,$period_id,$class_id,$section_id){
+    global $con;
+    $select="SELECT p.id FROM posts p 
+    INNER JOIN metadata m1 ON m1.item_id=p.id AND m1.meta_key='day_name' AND m1.meta_value=?
+    INNER JOIN metadata m2 ON m2.item_id=p.id AND m2.meta_key='period_id' AND m2.meta_value=?
+    INNER JOIN metadata m3 ON m3.item_id=p.id AND m3.meta_key='class' AND m3.meta_value=?
+       INNER JOIN metadata m4 ON m4.item_id=p.id AND m4.meta_key='section' AND m4.meta_value=?
+       WHERE p.type='timetable' AND p.status='publish'
+    ";
+    $stmt=$con->prepare($select);
+    $stmt->bind_param("siii",$day,$period_id,$class_id,$section_id);
+    $stmt->execute();
+    $result=$stmt->get_result();
+    if($result->num_rows==0){
+        return [];
+    }
+    $post=$result->fetch_assoc();
+    $post_id=$post['id'];
+    // select teacher_id from metadata
+    $meta=$con->prepare("SELECT meta_key,meta_value FROM `metadata` WHERE item_id=? AND meta_key IN ('teacher_id','subject_id')");
+    $meta->bind_param("i",$post_id);
+    $meta->execute();
+    $meta_result=$meta->get_result();
+    $data=[];
+    while($row=$meta_result->fetch_assoc()){
+        if($row['meta_key']=='teacher_id'){
+            $tid=intval($row['meta_value']);
+                $teacher=$con->prepare("SELECT Name FROM `accounts` WHERE id=?");
+                $teacher->bind_param("i",$tid);
+                $teacher->execute();
+                $teacher_result=$teacher->get_result();
+             
+               if($teacher_row = $teacher_result->fetch_assoc()){
+                $data['teacher'] = $teacher_row['Name'];
+            }
+            }
+            if($row['meta_key']=='subject_id'){
+                $sid=intval($row['meta_value']);
+                    $subject=$con->prepare("SELECT name FROM `courses` WHERE id=?");
+                    $subject->bind_param("i",$sid);
+                    $subject->execute();
+                    $subject_result=$subject->get_result();
+                               if($subject_row = $subject_result->fetch_assoc()){
+                $data['subject'] = $subject_row['name'];
+                }
+            }
+            }
+            return $data;
+            echo $sql;
+print_r($values);
+exit;
+        }
+    
+
+
+
 function get_the_classes()
 {
 
@@ -73,7 +129,13 @@ function get_posts(array $args = [], string $type = 'object')
         foreach ($args as $k => $v) {
             $condition_ar[] = "$k = ?";
             $values[] = $v;
-            $types .= "s";
+            if(is_int($v)){
+                $types .="i";
+            }
+            else{
+                $types .="s";
+            }
+          
         }
     }
 
@@ -127,7 +189,16 @@ function get_metadata($item_id,$meta_key='',$type='object'){
     return data_output($result , $type); 
 }
 
-function get_meta_value($item_id, $key) { $meta = get_metadata($item_id, $key); return !empty($meta) ? $meta[0]->meta_value : null; }
+function get_meta_value($item_id, $key) { 
+    $meta = get_metadata($item_id, $key); 
+    
+    if (!empty($meta) && isset($meta[0]->meta_value)) {
+        return $meta[0]->meta_value;
+    }
+
+    return null;
+}
+
 
 function data_output($query, $type='object'){
     $output=[];
@@ -138,7 +209,7 @@ function data_output($query, $type='object'){
         }
     }
     else{
-          while($result = $query->fetch_object){
+          while($result = $query->fetch_assoc()){
             $output[]=$result;
 
         }
@@ -160,7 +231,8 @@ function get_user_data($user_id,$type='object'){
     $query=$con->prepare("SELECT * FROM accounts WHERE id = ?");
     $query->bind_param("i",$user_id);
     $query->execute();
-  return data_output($query,$type);
+    $result=$query->get_result();
+  return data_output($result,$type);
 }
 function get_users($args = array(),$type ='object'){
     global $con;
@@ -186,9 +258,15 @@ function get_users($args = array(),$type ='object'){
         $query->bind_param($types, ...$values);
     }
     $query->execute();
- return ($type === 'array')
+    $result=$query->get_result();
+    $data=[];
+ while($row=($type === 'array')
         ? $result->fetch_assoc()
-        : $result->fetch_object();
+        : $result->fetch_object()
+ ){
+$data[]=$row;
+ }
+ return $data;
 }
 
 
@@ -253,7 +331,7 @@ $result=$query->get_result();
 
  }
  if($single){
-    if($result->num_rows() > 0){
+    if($result->num_rows > 0){
      return $result->fetch_object()->meta_value;
 }
 else{
@@ -321,7 +399,7 @@ function delete_usermeta($user_id,$meta_key){
         $select->bind_param("is",$user_id,$meta_key);
         $select->execute();
         $result=$select->get_result();
-    $check=$result->num_rows();
+    $check=$result->num_rows;
     if($check>0){
          $delete_query=$con->prepare("DELETE FROM `usermeta` WHERE user_id=? AND meta_key=?");
          $delete_query->bind_param("is",$user_id,$meta_key);

@@ -2,7 +2,7 @@
 <?php include ('../includes/config.php'); ?>
 <?php include ('../includes/functions.php'); ?>
 <?php 
-session_start();
+//session_start();
 //require('config.php');
 // extract($_REQUEST);
 $status=$_POST["status"];

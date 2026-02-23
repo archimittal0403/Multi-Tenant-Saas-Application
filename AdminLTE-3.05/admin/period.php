@@ -8,17 +8,26 @@ $from=isset($_POST['from'])?$_POST['from']:'';
 $to=isset($_POST['to'])?$_POST['to']:'';
 $status='publish';
 $type='period';
-$date_add= date('Y-m-d g:i:s');
+$date_add= date('Y-m-d H:i:s');
 
 
-$query=mysqli_query($con, "INSERT INTO `posts` (`title`,`status`,`publish_date`,`type`) VALUE('$title','$status','$date_add','$type')");
+$query=$con->prepare("INSERT INTO `posts` (`title`,`status`,`publish_date`,`type`) VALUE(?,?,?,?)");
+$query->bind_param("ssis",$title,$status,$date_add,$type);
+$query->execute();
+
 
 if($query){
   // it use  to return the id which is generated in   the insert whuch is $query 
   $item_id=mysqli_insert_id($con);
 }
-mysqli_query($con, "INSERT INTO `metadata` (`meta_key`,`meta_value`,`item_id`) VALUES('from','$from','$item_id')");
-mysqli_query($con, "INSERT INTO `metadata` (`meta_key`,`meta_value`,`item_id`) VALUES('to' ,'$to','$item_id')");
+$stmt=$con->prepare("INSERT INTO `metadata` (`meta_key`,`meta_value`,`item_id`) VALUES(?,?,?)");
+$meta_key='from';
+$stmt->bind_param("ssi",$meta_key,$from,$item_id);
+$stmt->execute();
+$meta_key='to';
+$stmt->bind_param("ssi",$meta_key,$to,$item_id);
+$stmt->execute();
+$stmt->close();
 header('Location: ../admin/dashboard.php');
 }
 ?>

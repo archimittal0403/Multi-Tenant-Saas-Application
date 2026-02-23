@@ -72,13 +72,13 @@ if (!empty($_POST['action']) && $_POST['action'] === 'fill_feedback') {
             SELECT 1 FROM meta_feedback s
             WHERE s.item_id = f.roll
               AND s.meta_key = 'subject_id'
-              AND s.meta_value = '$subject_id'
+              AND s.meta_value = ?
           )
           AND EXISTS (
             SELECT 1 FROM meta_feedback t
             WHERE t.item_id = f.roll
               AND t.meta_key = 'teacher_id'
-              AND t.meta_value = '$teacher_id'
+              AND t.meta_value =?
           )
         LIMIT 1
       ) AS rate
@@ -86,19 +86,32 @@ if (!empty($_POST['action']) && $_POST['action'] === 'fill_feedback') {
     FROM feedback f
     WHERE 1=1
   ";
+$params=[];
+$types="";
+$params[] = $subject_id;
+$types   .= "s";
 
+$params[] = $teacher_id;
+$types   .= "s";
     if ($class_id != '') {
-    $sql .= " AND f.class = '$class_id'";
+    $sql .= " AND f.class = ?";
+    $params[]=$class_id;
+    $types .= "s";
   }
 
   /* ---- OPTIONAL: section filter ---- */
   if ($section_id != '') {
-    $sql .= " AND f.section = '$section_id'";
+    $sql .= " AND f.section = ?";
+    $params[]=$section_id;
+    $types .= "s";
   }
 
-  $query = mysqli_query($con, $sql);
+  $query = $con->prepare($sql);
+$query->bind_param($types, ...$params);
+  $query->execute();
+  $query_result=$query->get_result();
 
-  while ($row = mysqli_fetch_assoc($query)) {
+  while ($row = $query_result->fetch_assoc()) {
     $count++;
 
     $data[] = [
@@ -136,47 +149,62 @@ FROM attendance1 a
 JOIN accounts s ON s.id = a.item_id
 WHERE s.type='student'
 ";
-
+$params=[];
+$types="";
 if($class_id!=''){
   $sql.=" AND EXISTS (
     SELECT 1 FROM attendance1 
-    WHERE item_id=a.item_id AND meta_key='at_class' AND meta_value='$class_id'
+    WHERE item_id=a.item_id AND meta_key='at_class' AND meta_value=?
   )";
+  $params[]=$class_id;
+  $types .="s";
 }
 
 if($section_id!=''){
   $sql.=" AND EXISTS (
     SELECT 1 FROM attendance1 
-    WHERE item_id=a.item_id AND meta_key='at_section' AND meta_value='$section_id'
+    WHERE item_id=a.item_id AND meta_key='at_section' AND meta_value=?
   )";
+  $params[]=$section_id;
+  $types .="s";
 }
 
 if($subject_id!=''){
   $sql.=" AND EXISTS (
     SELECT 1 FROM attendance1 
-    WHERE item_id=a.item_id AND meta_key='at_subject' AND meta_value='$subject_id'
+    WHERE item_id=a.item_id AND meta_key='at_subject' AND meta_value=?
   )";
+   $params[]=$subject_id;
+  $types .="s";
 }
 
 if($teacher_id!=''){
   $sql.=" AND EXISTS (
     SELECT 1 FROM attendance1 
-    WHERE item_id=a.item_id AND meta_key='at_teacher' AND meta_value='$teacher_id'
+    WHERE item_id=a.item_id AND meta_key='at_teacher' AND meta_value=?
   )";
+   $params[]=$teacher_id;
+  $types .="s";
 }
 
 if($date!=''){
   $sql.=" AND EXISTS (
     SELECT 1 FROM attendance1 
-    WHERE item_id=a.item_id AND meta_key='dob' AND meta_value='$date'
+    WHERE item_id=a.item_id AND meta_key='dob' AND meta_value=?
   )";
+   $params[]=$date;
+  $types .="s";
 }
 
 $sql.=" GROUP BY a.item_id";
 
-$query = mysqli_query($con,$sql);
-
-while($row=mysqli_fetch_assoc($query)){
+$query = $con->prepare($sql);
+if(!empty($params)){
+  $query->bind_param($types, ...$params);
+}
+$query->execute();
+$result=$query->get_result();
+while($row=$result->fetch_assoc()){
   $count++;
   $data[]=[
     'Sno'=>$count,
@@ -224,25 +252,40 @@ WHERE s.type='student'
 GROUP BY a.item_id
 HAVING 1=1
 ";
+$params=[];
+$types="";
 if($class_id!=''){
-  $sql.=" AND at_class='$class_id'";
+  $sql.=" AND at_class=?";
 }
+ $params[]=$class_id;
+  $types .="s";
 
 if($section_id!=''){
-  $sql.=" AND at_section='$section_id'";
+  $sql.=" AND at_section=?";
 }
+$params[]=$section_id;
+$types .="s";
 
 if($subject_id!=''){
-  $sql.=" AND at_subject='$subject_id'";
+  $sql.=" AND at_subject=?";
 }
+ $params[]=$subject_id;
+  $types .="s";
+
 if($date!=''){
-  $sql .= " AND dob = '$date'";
+  $sql .= " AND dob = ?";
 }
+ $params[]=$date;
+  $types .="s";
 
 
-$query = mysqli_query($con,$sql);
-
-while($row=mysqli_fetch_assoc($query)){
+$query = $con->prepare($sql);
+if(!empty($params)){
+  $query->bind_param($types, ...$params);
+}
+$query->execute();
+$result=$query->get_result();
+while($row=$result->fetch_assoc()){
   $count++;
     $statusText  = ($row['status'] == 'P') ? 'Present' : 'Absent';
   $statusClass = ($row['status'] == 'P') ? 'btn-success' : 'btn-danger';
@@ -286,32 +329,54 @@ $semester='';
     $count=0;
     $data=[];
     $sql="SELECT * FROM `accounts` WHERE type='student'";
+    $params=[];
+$types="";
     if($class_id!=''){
-        $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value='$class_id')";
+        $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value=?)";
+         $params[]=$class_id;
+  $types .="s";
     }
     if($section_id!=''){
-          $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value='$section_id')";
+          $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value=?)";
+           $params[]=$section_id;
+  $types .="s";
     }
     if($subject_id!=''){
-  $q=mysqli_query($con,"SELECT semester FROM `courses` WHERE id='$subject_id'");
-  $r=mysqli_fetch_assoc($q);
+  $q=$con->prepare("SELECT semester FROM `courses` WHERE id=?");
+  $q->bind_param("i",$subject_id);
+  $q->execute();
+  $q_result=$q->get_result();
+  $r=$q_result->fetch_assoc();
   $semester=$r['semester'];
     }
     if($semester!=''){
-      $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value='$semester')";
+      $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
+          $params[]=$semester;
+  $types .="s";
     }
-    $query=mysqli_query($con,$sql);
-    while($row_fetch=mysqli_fetch_assoc($query)){
+    $query=$con->prepare($sql);
+   if(!empty($params)){
+  $query->bind_param($types, ...$params);
+$query->execute();
+  }
+$query_result=$query->get_result();
+    while($row_fetch=$query_result->fetch_assoc()){
         $count++;
         $name=$row_fetch['Name'];
         $enroll_id=$row_fetch['id'];
         $at_class=get_usermeta($enroll_id,'st_class');
-        $at_class_id=mysqli_query($con,"SELECT title FROM `posts` WHERE id='$at_class'");
-        $class_fetch=mysqli_fetch_assoc($at_class_id);
+        $at_class_id=$con->prepare("SELECT title FROM `posts` WHERE id=?");
+        $at_class_id->bind_param("s",$at_class);
+        $at_class_id->execute();
+        $at_class_id_result=$at_class_id->get_result();
+        $class_fetch=$at_class_id->fetch_assoc();
         $at_class_name=$class_fetch['title'];
    $at_section=get_usermeta($enroll_id,'st_section');
-        $at_section_id=mysqli_query($con,"SELECT title FROM `section` WHERE id='$at_section'");
-        $section_fetch=mysqli_fetch_assoc($at_section_id);
+        $at_section_id=$con->prepare("SELECT title FROM `section` WHERE id=?");
+        $at_section_id->bind_param("s",$at_section);
+        $at_section_id->execute();
+        $at_section_id_result=$at_section_id->get_result();
+        $section_fetch=$at_section_id_result->fetch_assoc();
         $at_section_name=$section_fetch['title'] ?? 'N/A';
     $data[]=[
         'SNo'=>$count,
@@ -344,19 +409,28 @@ if(!empty($_POST['action']) && $_POST['action']=='saveAttendance'){
 }
     foreach($attendance as $student_id=>$status){
      
-      $result=  mysqli_query($con,"INSERT INTO `attendance1` (`item_id`,`meta_key`,`meta_value`) 
+      $result=  $con->prepare("INSERT INTO `attendance1` (`item_id`,`meta_key`,`meta_value`) 
         VALUES
-        ('$student_id','status','$status'),
-        ('$student_id','dob','$date'),
-        ('$student_id','at_class','$class'),
-        ('$student_id','at_section','$section'),
-        ('$student_id','at_teacher','$teacher'),
-        ('$student_id','at_subject','$subject')
+        (?,?,?),
+        (?,?,?),
+        (?,?,?),
+        (?,?,?),
+        (?,?,?),
+        (?,?,?)
         ");
         if(!$result){
           echo mysqli_error($con);
           exit;
         }
+        $result->bind_param("ississississississ",
+         $student_id, $status_key, $status,
+    $student_id, $dob_key, $date,
+    $student_id, $class_key, $class,
+    $student_id, $section_key, $section,
+    $student_id, $teacher_key, $teacher,
+    $student_id, $subject_key, $subject);
+    $result->execute();
+    $result->close();
     }
     echo json_encode(["status" => true, "message" => "success"]);
 exit;
@@ -374,36 +448,55 @@ if (!empty($_POST['action']) && $_POST['action'] === 'get_parent') {
     $count = 0;
 
     // ✅ BASE QUERY (MISSING BEFORE)
-    $sql = "SELECT * FROM accounts WHERE type='student'";
-
+    $sql = "SELECT * FROM accounts WHERE type=?";
+$params=['student'];
+$types="s";
    if ($name != '') {
-        $sql .= " AND Name = '$name'";
+        $sql .= " AND Name = ?";
+        $params[]=$name;
+        $types .="s";
     }
 
     if ($enroll_id != '') {
-        $sql .= " AND id = '$enroll_id'";
+        $sql .= " AND id = ?";
+        $params[]=$enroll_id;
+        $types .="s";
     }
   if($class_id!=''){
-    $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value='$class_id')";
+    $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value=?)";
+    $params[]=$class_id;
+    $types .="s";
   }
   if($section_id!=''){
-    $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value='$section_id')";
+    $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value=?)";
+    $params[]=$section_id;
+    $types .="s";
   }
-  $query=mysqli_query($con,$sql);
-  while($row_fetch=mysqli_fetch_assoc($query)){
+  $query=$con->prepare($sql);
+  if(!$query){
+    echo $con->error;
+    exit;
+  }
+      $query->bind_param($types, ...$params);
+      $query->execute();
+      $query_result=$query->get_result();
+  while($row_fetch=$query_result->fetch_assoc()){
     $count++;
     $enroll_id=$row_fetch['id'];
     $student_name=$row_fetch['Name'];
     $parent_id=0;
-  $q = mysqli_query(
-            $con,
+    $childParent= "%i:$enroll_id;%";
+  $q = $con->prepare(
             "SELECT user_id 
              FROM usermeta 
              WHERE meta_key='children' 
-             AND meta_value LIKE '%i:$enroll_id;%'"
+             AND meta_value LIKE ?"
         );
+        $q->bind_param("s",$childParent);
+        $q->execute();
+        $q_result=$q->get_result();
 
-        if ($pr = mysqli_fetch_assoc($q)) {
+        if ($pr = $q_result->fetch_assoc()) {
             $parent_id = $pr['user_id'];
         }
 
@@ -412,15 +505,18 @@ if (!empty($_POST['action']) && $_POST['action'] === 'get_parent') {
         $parent_address = '';
         $parent_email = 'N/A';
   if ($parent_id) {
-            $p = mysqli_query($con, "SELECT email FROM accounts WHERE id='$parent_id'");
-            $parent_email = mysqli_fetch_assoc($p)['email'] ?? 'N/A';
+            $p = $con->prepare("SELECT email FROM accounts WHERE id=?");
+            $p->bind_param("i",$parent_id);
+            $p->execute();
+            $p_result=$p->get_result();
+            $row_email=$p_result->fetch_assoc();
+            $parent_email = $row_email['email'] ?? 'N/A';
         }
         if($parent_id){
-        $meta_q = mysqli_query(
-            $con,
-            "SELECT meta_key, meta_value 
+        $meta_q =$con->prepare(            
+          "SELECT meta_key, meta_value 
              FROM usermeta 
-             WHERE user_id='$enroll_id'
+             WHERE user_id=?
                AND meta_key IN (
                    'father_name',
                    'father_mobile',
@@ -429,8 +525,10 @@ if (!empty($_POST['action']) && $_POST['action'] === 'get_parent') {
                    'parent_address'
                )"
         );
-
-        while ($meta = mysqli_fetch_assoc($meta_q)) {
+$meta_q->bind_param("i",$enroll_id);
+$meta_q->execute();
+$meta_q_result=$meta_q->get_result();
+        while ($meta = $meta_q_result->fetch_assoc()) {
             switch ($meta['meta_key']) {
                 case 'father_name':
                     $father_name = $meta['meta_value'];
@@ -483,37 +581,58 @@ if(!empty($_POST['action']) && $_POST['action']=='get_result_details'){
 
     $data1=[];
     $count=0;
-    $sql1="SELECT * FROM `accounts` WHERE type='student'";
+    $sql1="SELECT * FROM `accounts` WHERE type=?";
+$params=['student'];
+$types = "s";
     if($class_id!=''){
-        $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value='$class_id')";
+        $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_class' AND meta_value=?)";
+        $params[]=$class_id;
+        $types .="s";
     }
     if($section_id!=''){
-        $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value='$section_id')";
+        $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='st_section' AND meta_value=?)";
+        $params[]=$section_id;
+        $types .="s";
     } 
     $semester = '';
     if($subject_id!=''){
 
-        $sub_q = mysqli_query($con,"SELECT semester FROM `courses` WHERE id='$subject_id' LIMIT 1");
-    if($sub_q && mysqli_num_rows($sub_q) > 0){
-        $sub_row = mysqli_fetch_assoc($sub_q);
+        $sub_q = $con->prepare("SELECT semester FROM `courses` WHERE id=? LIMIT 1");
+        $sub_q->bind_param("i",$subject_id);
+        $sub_q->execute();
+        $sub_q_result=$sub_q->get_result();
+
+    if($sub_q_result && $sub_q_result->num_rows>0){
+        $sub_row = $sub_q_result->fetch_assoc();
         $semester = $sub_row['semester'];
     }
     }
     if($semester!=''){
-      $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value='$semester')";
+      $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
+      $params[]=$semester;
+      $types .="i";
     }
-    $query=mysqli_query($con,$sql1);
-    while($row_fetch=mysqli_fetch_assoc($query)){
+    $query=$con->prepare($sql1);
+    $query->bind_param($types, ...$params);
+    $query->execute();
+    $query_result=$query->get_result();
+    while($row_fetch=$query_result->fetch_assoc()){
 $count++;
     $enroll_id=$row_fetch['id'];
     $name=$row_fetch['Name'];
     $res_class=get_usermeta($enroll_id,'st_class');
-$res_class_id=mysqli_query($con,"SELECT title FROM posts WHERE id='$res_class'");
-$class_fetch=mysqli_fetch_assoc($res_class_id);
+$res_class_id=$con->prepare("SELECT title FROM posts WHERE id=?");
+$res_class_id->bind_param("s",$res_class);
+$res_class_id->execute();
+$res_class_id_result=$res_class_id->get_result();
+$class_fetch=$res_class_id_result->fetch_assoc();
 $res_class_name=$class_fetch['title'];
 $res_section=get_usermeta($enroll_id,'st_section');
-$res_section_id=mysqli_query($con,"SELECT title FROM section WHERE id='$res_section'");
-$section_fetch=mysqli_fetch_assoc($res_section_id);
+$res_section_id=$con->prepare("SELECT title FROM section WHERE id=?");
+$res_section_id->bind_param("s",$res_section);
+$res_section_id->execute();
+$res_section_id_result=$res_section_id->get_result();
+$section_fetch=$res_section_id_result->fetch_assoc();
 $res_section_name=$section_fetch['title']?? 'N/A';
         $data1[]=[
             'Sno'=>$count,
@@ -537,15 +656,24 @@ $res_section_name=$section_fetch['title']?? 'N/A';
   $section_id = $_POST['section_id'] ?? '';
 
                  $data=[];
-                  $sql="SELECT * FROM accounts WHERE type='student'";
+                  $sql="SELECT * FROM accounts WHERE type=?";
+                  $params=['student'];
+                  $types = "s";
                    if($class_id!=''){
-                      $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_class' AND meta_value='$class_id')"; 
+                      $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_class' AND meta_value=?)"; 
+                      $params[]=$class_id;
+                      $types .="s";
                      } 
                      if($section_id!=''){ 
-                        $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_section' AND meta_value='$section_id')";
+                        $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_section' AND meta_value=?)";
+                        $params[]=$section_id;
+                        $types .="s";
                       }
-                       $query=mysqli_query($con,$sql); 
-                       while($row=mysqli_fetch_assoc($query)){ 
+                       $query=$con->prepare($sql); 
+                          $query->bind_param($types, ...$params);
+                          $query->execute();
+                          $query_result=$query->get_result();
+                       while($row=$query_result->fetch_assoc()){ 
                         $user_id=$row['id'];
                         $user_edit='<a href="user-account.php?class='.$class_id.'&section='.$section_id.'&edit_student='.$user_id.'" class ="btn btn-sm btn-success"><i class="fa fa-pencil-alt"></i></a>';
                         $user_delete='<a href="user-account.php?class='.$class_id.'&section='.$section_id.'&delete_student='.$user_id.'" class="btn btn-sm btn-success mx-2"><i class="fa fa-trash-alt"></i></a>' ;
@@ -591,48 +719,62 @@ if(!empty($_POST['action']) && $_POST['action'] == 'save_marks'){
     }
 
     // 1️⃣ Get or Create Result
-    $check = mysqli_query($con,
+    $check = $con->prepare(
         "SELECT result_id FROM result
-         WHERE class_id='$class_id'
-         AND section_id='$section_id'
-         AND subject_id='$subject_id'"
+         WHERE class_id=?
+         AND section_id=?
+         AND subject_id=?"
     );
-
-    if(mysqli_num_rows($check) > 0){
-        $row = mysqli_fetch_assoc($check);
+$check->bind_param("iii",$class_id,$section_id,$subject_id);
+$check->execute();
+$check_result=$check->get_result();
+    if($check_result->num_rows > 0){
+        $row = $check_result->fetch_assoc();
         $result_id = $row['result_id'];
     } else {
-        mysqli_query($con,
+       $stmt= $con->prepare(
             "INSERT INTO result (class_id,section_id,subject_id)
-             VALUES('$class_id','$section_id','$subject_id')"
+             VALUES(?,?,?)"
         );
+        $stmt->bind_param("iii",$class_id,$section_id,$subject_id);
+        $stmt->execute();
+        //$stmt_result=$stmt->get_result();
         $result_id = mysqli_insert_id($con);
     }
 
     // 2️⃣ Insert or Update Marks
     foreach($marks as $student_id => $mark){
 
-        $exist = mysqli_query($con,
+        $exist =$con->prepare(
             "SELECT id FROM result_marks
-             WHERE result_id='$result_id'
-             AND student_id='$student_id'"
+             WHERE result_id=?
+             AND student_id=?"
         );
+        $exist->bind_param("ii",$result_id,$student_id);
+        $exist->execute();
+        $exist_result=$exist->get_result();
 
-        if(mysqli_num_rows($exist) > 0){
+        if($exist_result->num_rows> 0){
 
-            mysqli_query($con,
+           $stpt=$con->prepare(
                 "UPDATE result_marks
-                 SET marks='$mark'
-                 WHERE result_id='$result_id'
-                 AND student_id='$student_id'"
+                 SET marks=?
+                 WHERE result_id=?
+                 AND student_id=?"
             );
+$stpt->bind_param("iii",$mark,$result_id,$student_id);
+$stpt->execute();
+$stpt_result=$stpt->get_result();
 
         } else {
 
-            mysqli_query($con,
+           $insert=$con->prepare(
                 "INSERT INTO result_marks (result_id,student_id,marks)
-                 VALUES('$result_id','$student_id','$mark')"
+                 VALUES(?,?,?)"
             );
+            $insert->bind_param("iii",$result_id,$student_id,$mark);
+            $insert->execute();
+            
         }
     }
 

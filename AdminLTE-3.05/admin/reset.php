@@ -13,10 +13,16 @@ if(isset($_POST['change_password'])){
 if($new==$confirm){
     $hased=password_hash($new,PASSWORD_DEFAULT);
 
- $select=mysqli_query($con,"SELECT email FROM `accounts` WHERE email='$admin_email'");
-if($row_count=mysqli_num_rows($select)>0){
-    $row_fetch=mysqli_fetch_assoc($select);
-    $update=mysqli_query($con,"UPDATE `accounts` SET password='$hased' WHERE email='$admin_email'");
+ $select=$con->prepare("SELECT email FROM `accounts` WHERE email=?");
+ $select->bind_param("s",$admin_email);
+ $select->execute();
+ $select_result=$select->get_result();
+ $row_count=$select_result->num_rows;
+if($row_count>0){
+    $row_fetch=$select_result->fetch_assoc();
+    $update=$con->prepare("UPDATE `accounts` SET password=? WHERE email=?");
+    $update->bind_param("ss",$hased,$admin_email);
+    $update->execute();
     if($update){
        echo "<script>alert('Reset the password successfully');</script>";
 

@@ -43,22 +43,23 @@ $password   = date('dmY', strtotime($_POST['dob'] ?? ''));
 $md_pass    = password_hash($password, PASSWORD_DEFAULT);
 
 /* 🔎 Duplicate email check */
-$check = mysqli_query(
-    $con,
-    "SELECT id FROM accounts WHERE email='$email' AND college_id='$college_id'"
-);
+$check = $con->prepare("SELECT id FROM accounts WHERE email=? AND college_id=?");
+$check->bind_param("si",$email,$college_id);
+$check->execute();
+$check->store_result();
 
-if (mysqli_num_rows($check) > 0) {
+if ($check->num_rows > 0) {
     echo json_encode(['success'=>false,'message'=>'Email already exists']);
     exit;
 }
 
 /* ✅ INSERT account */
-$insert = mysqli_query(
-    $con,
+$insert =$con->prepare(
     "INSERT INTO accounts (type,email,password,Name,college_id)
-     VALUES ('teacher','$email','$md_pass','$name','$college_id')"
+     VALUES ('teacher',?,?,?,?)"
 );
+$insert->bind_param("sssi",$email,$md_pass,$name,$college_id);
+$insert->execute();
 
 if (!$insert) {
     echo json_encode(['success'=>false,'message'=>mysqli_error($con)]);
@@ -92,7 +93,9 @@ foreach($usermeta as $key=>$value){
     if(is_array($value)){
     $value=json_encode($value);
   }
-  $query=mysqli_query($con,"INSERT INTO `usermeta` (`user_id`,`meta_key`,`meta_value`) VALUES('$user_id','$key','$value')");
+  $query=$con->prepare("INSERT INTO `usermeta` (`user_id`,`meta_key`,`meta_value`) VALUES(?,?,?)");
+  $query->bind_param("isi",$user_id,$key,$value);
+  $query->execute();
 }
 $response=array(
   'success'=>'true',

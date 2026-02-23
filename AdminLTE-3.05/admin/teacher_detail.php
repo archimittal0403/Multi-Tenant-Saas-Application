@@ -17,8 +17,11 @@ else{
 if(isset($_GET['teacher_id'])){
     $teacher_id=$_GET['teacher_id'];
     $college_id=$_SESSION['college_id'];
-    $query=mysqli_query($con,"SELECT * FROM `accounts` WHERE id='$teacher_id' AND college_id='$college_id'");
-    $row_fetch=mysqli_fetch_assoc($query);
+    $query=$con->prepare("SELECT * FROM `accounts` WHERE id=? AND college_id=?");
+    $query->bind_param("ii",$teacher_id,$college_id);
+    $query->execute();
+    $query_result=$query->get_result();
+    $row_fetch=$query_result->fetch_assoc();
     $teacher_name=$row_fetch['Name'];
     $teacher_email=$row_fetch['email'];
     $phone=get_usermeta($teacher_id,'phone');
@@ -30,16 +33,25 @@ if(isset($_GET['teacher_id'])){
     $class_id=get_usermeta($teacher_id,'class');
     $section_id=get_usermeta($teacher_id,'section');
     $subject_id=get_usermeta($teacher_id,'subject');
-$class=mysqli_query($con,"SELECT title FROM `posts` WHERE id='$class_id'");
-while($row_class=mysqli_fetch_assoc($class)){
+$class=$con->prepare("SELECT title FROM `posts` WHERE id=?");
+$class->bind_param("i",$class_id);
+$class->execute();
+$class_result=$class->get_result();
+while($row_class=$class_result->fetch_assoc()){
     $class_title=$row_class['title'];
 }
-$section=mysqli_query($con,"SELECT title FROM `section` WHERE id='$section_id'");
-while($row_section=mysqli_fetch_assoc($section)){
+$section=$con->prepare("SELECT title FROM `section` WHERE id=?");
+$section->bind_param("i",$section_id);
+$section->execute();
+$section_result=$section->get_result();
+while($row_section=$section_result->fetch_assoc()){
     $section_title=$row_section['title'];
 }
-$subject=mysqli_query($con,"SELECT name FROM `courses` WHERE id='$subject_id'");
-while($row_subject=mysqli_fetch_assoc($subject)){
+$subject=$con->prepare("SELECT name FROM `courses` WHERE id=?");
+$subject->bind_param("i",$subject_id);
+$subject->execute();
+$subject_result=$subject->get_result();
+while($row_subject=$subject_result->fetch_assoc()){
     $subject_title=$row_subject['name'];
 }
 $salary=get_usermeta($teacher_id,'salary');
