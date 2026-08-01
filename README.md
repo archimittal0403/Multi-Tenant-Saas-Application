@@ -1,121 +1,276 @@
-Introduction
-============
+# IRISERP – Dynamic Multi-Tenant SaaS ERP System
 
-[![npm version](https://img.shields.io/npm/v/admin-lte/latest.svg)](https://www.npmjs.com/package/admin-lte)
-[![Packagist](https://img.shields.io/packagist/v/almasaeed2010/adminlte.svg)](https://packagist.org/packages/almasaeed2010/adminlte)
-[![CDNJS](https://img.shields.io/cdnjs/v/admin-lte.svg)](https://cdnjs.com/libraries/admin-lte)
+**IRISERP** is a dynamic **Multi-Tenant ERP / Student Management System** developed using **PHP, MySQL, Bootstrap, JavaScript, AJAX, Python, and Flask**. The system is designed for both **Schools and Colleges** and can adapt to different institute structures **without changing a single line of code**.
 
-**AdminLTE** is a fully responsive administration template. Based on **[Bootstrap 4.4](https://getbootstrap.com)** framework and also the JS/jQuery plugin.
-Highly customizable and easy to use. Fits many screen resolutions from small mobile devices to large desktops.
+---
 
-**Preview on [AdminLTE.io](https://adminlte.io/themes/v3)**
+## Problem Statement
 
-Looking for Premium Templates?
-------------------------------
-AdminLTE.io just opened a new premium templates page. Hand picked to ensure the best quality and the most affordable
-prices. Visit https://adminlte.io/premium for more information.
+Most ERP solutions in the education sector suffer from three major problems:
 
-!["AdminLTE Presentation"](https://adminlte.io/AdminLTE3.png "AdminLTE Presentation")
+* A separate application and database is required for every institute.
+* School and college structures are different, so separate systems must be developed.
+* Large numbers of tables and duplicated data increase maintenance and storage complexity.
 
-**AdminLTE** has been carefully coded with clear comments in all of its JS, SCSS and HTML files.
-SCSS has been used to increase code customizability.
+IRISERP was built specifically to solve these problems.
 
-Installation
-------------
-There are multiple ways to install AdminLTE.
+---
 
-#### Download:
+## What Makes IRISERP Unique?
 
-Download from [Github releases](https://github.com/ColorlibHQ/AdminLTE/releases).
+### 1. Multi-Tenant SaaS Architecture
 
-#### Using The Command Line:
+* Multiple institutes run on a **single application**.
+* Data of different institutes is stored separately and never mixes.
+* New institutes can be onboarded without creating a new deployment.
 
-_**Important Note**: To install it via NPM/Yarn, you need at least Node.js 10 or higher._
+### 2. Dynamic Institute Architecture
 
-__Via NPM__
+Schools use:
+
+* Class
+* Section
+
+Colleges use:
+
+* Course
+* Branch
+* Semester
+
+IRISERP automatically changes its structure according to the registered institute type. The same codebase supports both school and college workflows.
+
+**No code modification is required when a new institute is added.**
+
+### 3. Metadata-Driven Database Design
+
+Instead of creating many separate tables and columns, the system uses a **metadata architecture** based on **key-value pairs**.
+
+Benefits:
+
+* Flexible schema
+* Reduced database complexity
+* Easier customization
+* Better maintainability
+
+---
+
+# Key Features
+
+## Student Management
+
+* Student registration
+* Profile management
+* Academic records
+* ID and profile management
+
+## Academic Module
+
+* Classes / Courses
+* Sections / Branches
+* Subjects
+* Timetable management
+* Lecturer allocation
+
+## Attendance System
+
+* QR-based attendance
+* Face verification
+* **Liveness detection before attendance marking**
+
+### AI Attendance Pipeline
+
+* Python
+* Flask API
+* MediaPipe
+* QR Scanner integration
+
+Attendance is marked only after successful liveness verification, reducing proxy attendance.
+
+## Examination Module
+
+* Exam creation
+* Date sheet generation
+* Admit card generation
+* Result management
+* GPA calculation
+* PDF result generation
+
+## Learning Management Features
+
+* Study material upload
+* Assignment upload
+* Assignment submission tracking
+* Timetable access
+
+## Communication Features
+
+* Notices and announcements
+* Student updates
+* Institute-wide notifications
+
+## AI Chatbot
+
+Integrated AI chatbot using **DeepSeek API**.
+
+### Hybrid Chatbot Design
+
+* Rule-based responses for common queries
+* AI responses for complex queries
+
+This hybrid approach significantly reduces token consumption and API cost.
+
+---
+
+# Performance Optimization
+
+IRISERP uses **AJAX-based asynchronous operations** extensively.
+
+Benefits:
+
+* No full page refresh
+* Faster user experience
+* Reduced server load
+* Real-time interactions
+
+---
+
+# Security Features
+
+* Password hashing
+* OTP-based password reset
+* Session management
+* Role-based access control (RBAC)
+* CSRF protection
+* Input validation and sanitization
+* Secure authentication flow
+
+---
+
+# Technology Stack
+
+| Layer            | Technology                                           |
+| ---------------- | ---------------------------------------------------- |
+| Frontend         | HTML5, CSS3, Bootstrap, AdminLTE, JavaScript, jQuery |
+| Backend          | PHP                                                  |
+| Database         | MySQL                                                |
+| Async Operations | AJAX                                                 |
+| AI / ML          | Python, MediaPipe                                    |
+| API Layer        | Flask API                                            |
+| AI Integration   | DeepSeek API                                         |
+| Libraries        | DataTables, FullCalendar, PHPMailer, PhpSpreadsheet  |
+| Environment      | XAMPP                                                |
+
+---
+
+# System Architecture
+
+```text
+Users
+   ↓
+PHP + AJAX Frontend
+   ↓
+Multi-Tenant Business Layer
+   ↓
+Metadata Engine (Key-Value Storage)
+   ↓
+MySQL Database
+   ↓
+Python Flask Services
+   ↓
+MediaPipe / AI Modules
+```
+
+---
+
+# Database Strategy
+
+Core tables include:
+
+* institutes
+* users
+* usermeta
+* students
+* attendance
+* exams
+* results
+* assignments
+* study_material
+
+The **usermeta** table stores dynamic attributes using a metadata approach.
+
+---
+
+# Installation
+
+## Prerequisites
+
+* PHP 8+
+* MySQL 5.7+
+* Python 3.10+
+* Composer
+* XAMPP / Apache
+
+## Steps
+
 ```bash
-npm install admin-lte@^3.0 --save
+git clone https://github.com/your-username/Multi-Tenant-Saas-Application.git
+cd Multi-Tenant-Saas-Application
+composer install
 ```
 
-__Via Yarn__
-```bash
-yarn add admin-lte@^3.0
-```
+Import the database SQL file and configure database credentials in the config folder.
 
-__Via Composer__
-```bash
-composer require "almasaeed2010/adminlte=~3.0"
-```
+Start Apache, MySQL, and the Flask attendance API.
 
-__Via Git__
-- Clone to your machine
-```
-git clone https://github.com/ColorlibHQ/AdminLTE.git
-```
+---
 
-Documentation
--------------
-Visit the [online documentation](https://adminlte.io/docs/3.0/) for the most
-updated guide. Information will be added on a weekly basis.
+# Research & Engineering Contributions
 
-Browser Support
----------------
-- IE 10+
-- Firefox (latest)
-- Chrome (latest)
-- Safari (latest)
-- Opera (latest)
-- Microsoft Edge (latest)
+This project demonstrates practical implementation of:
 
-Contribution
-------------
-Contribution are always **welcome and recommended**! Here is how:
+* Multi-tenant SaaS architecture
+* Dynamic ERP modeling
+* Metadata-driven database systems
+* Hybrid AI chatbot optimization
+* AI-assisted attendance verification
+* PHP–Python interoperability
+* REST API integration
+* AJAX-driven real-time UI
 
-- Fork the repository ([here is the guide](https://help.github.com/articles/fork-a-repo/)).
-- Clone to your machine ```git clone https://github.com/YOUR_USERNAME/AdminLTE.git```
-- Create a new branch
-- Make your changes
-- Create a pull request
+---
 
-#### Compile dist files
-To compile the dist files you need nodejs/npm, clone/download the repo then:
+# Future Enhancements
 
-1. `npm install` (install npm deps)
-2. _Optional:_ `npm run dev` (developer mode, autocompile with browsersync support for live demo)
-3. `npm run production` (compile css/js files)
+* Mobile application
+* Parent portal
+* Online fee payment gateway
+* Cloud deployment with subdomain tenants
+* Analytics dashboard
+* AI-powered academic insights
 
-#### Contribution Requirements:
-- When you contribute, you agree to give a non-exclusive license to AdminLTE.io to use that contribution in any context as we (AdminLTE.io) see appropriate.
-- If you use content provided by another party, it must be appropriately licensed using an [open source](http://opensource.org/licenses) license.
-- Contributions are only accepted through Github pull requests.
-- Finally, contributed code must work in all supported browsers (see above for browser support).
+---
 
-License
--------
-AdminLTE is an open source project by [AdminLTE.io](https://adminlte.io) that is licensed under [MIT](http://opensource.org/licenses/MIT). AdminLTE.io
-reserves the right to change the license of future releases.
+# Project Impact
 
-Latest Release
----------------
-- [AdminLTE 3](https://github.com/ColorlibHQ/AdminLTE/releases/latest)
+IRISERP transforms a traditional institute-specific ERP into a **configurable SaaS platform** that supports multiple educational organizations from a single deployment while maintaining data isolation, flexibility, security, and scalability.
 
-Legacy Releases
----------------
-- [AdminLTE 2](https://github.com/ColorlibHQ/AdminLTE/releases/tag/v2.4.18)
-- [AdminLTE 1](https://github.com/ColorlibHQ/AdminLTE/releases/tag/1.3.1)
+---
 
-Change log
-----------
-Visit the [releases](https://github.com/ColorlibHQ/AdminLTE/releases) page to view the changelog
+# Author
 
-Image Credits
--------------
-[Pixeden](http://www.pixeden.com/psd-web-elements/flat-responsive-showcase-psd)
+**Archi Mittal**
 
-[Graphicsfuel](http://www.graphicsfuel.com/2013/02/13-high-resolution-blur-backgrounds/)
+* B.Tech (2026), Ajay Kumar Garg Engineering College
+* Full Stack Developer
 
-[Pickaface](http://pickaface.net/)
+GitHub: https://github.com/archimittal0403
 
-[Unsplash](https://unsplash.com/)
+LinkedIn: https://www.linkedin.com/in/archi-mittal-177b18299/
 
-[Uifaces](http://uifaces.com/)
+Live DEMO : https://erpsm.innovesenjournals.in/student%20management/index.php
+
+---
+
+# License
+
+This project is released under the **MIT License**.
