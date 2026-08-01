@@ -1,332 +1,950 @@
-<?php 
-include('includes/config.php')?>
 <?php
-include('header.php')
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+?>
+<?php
+include('includes/config.php');
+include('header.php');
 ?>
 
-<nav class="navbar navbar-expand-lg navar-dark bg-secondary">
-  <div class="container-fluid">
-    <img src="./assest/images/akg-logo.png" alt=""  width="50" height="50">
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNavDropdown">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link active text-light" aria-current="page" href="#">Home</a>
-        </li>
-       
-        <li class="nav-item">
-          <a class="nav-link text-light" href="contact.php">Contact Us</a>
-        </li>
-       
-</div>
-</ul>
-<ul class="navbar-nav d-flex nav-flex-icons  nav-flex-icons">
-   <!-- Icon dropdown -->
-    <li class="nav-item dropdown">
-    <?php if(isset($_SESSION['login'])) {  ?>
-      <a class="nav-link dropdown-toggle text-light mx-4" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-<i class="fas fa-user mx-3"></i>Account
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="\student management\AdminLTE-3.05\admin\dashboard.php">Dashboard</a></li>
-            <li><a class="dropdown-item" href="#">Another</a></li>
-            <li><a class="dropdown-item" href="logout.php">logout</a></li>
-          </ul>
+<!DOCTYPE html>
+<html lang="en">
 
- <?php } else { ?>
+<head>
 
-        <a href="login.php" class="nav-link text-light"><i class="fa fa-user mx-3"></i>Login</a>
-      <?php } ?>
- </li>
- </ul>
-</div>
-</nav>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div class="d-flex shadow" style="height:500px;background:linear-gradient(-45deg, navy 50%, transparent 50%)">
-  <div class="container-fluid my-auto ">
-    <div class="row">
-      <div class="col-lg-6 my-auto">
-<h1 class="display-1 font-weight-bold">Enroll now for the academic year 2026–2027</h1>
-<p>This is a student manangement system portal with various blocks.</p>
-<a href="" class="btn btn-md btn-primary px-3 py-2"><p class="my-1">Call to Action</p></a>
-</div>
-</form>
-</div>
-</div>
-</div>
-</div>
-  </div>
-</div>
+    <title>IRISERP - Smart Education ERP</title>
 
-<!-- about us -->
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<section class="py-5 bg-light">
-  
-  <div class="container">
-   <div class="row">
-    <div class="col-lg-6 py-4">
-      <h2 class="font-weight-bold">About Us</h2>
-      <div class="pr-3">
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
-      <p>Our school is dedicated to providing a safe, supportive, and well-managed learning environment where students can achieve academic excellence and personal growth. Founded on the need for a better educational experience, the school was created after recognizing gaps in traditional systems—especially in communication, student monitoring, and overall care—during a child’s transition to 9th grade. Guided by strong values, a clear mission, and a commitment to continuous improvement, we integrate modern teaching practices with a robust School ERP system that ensures transparency, efficient administration, and strong collaboration between parents, teachers, and management, building trust and confidence in every student’s educational journey.</p>
-      <!-- <p>An "About Us" page for a school should convey its mission, history, values, and unique features, creating a positive impression and building trust with prospective families and students. Key elements include a mission statement, a brief history, the school's values, and possibly a timeline of milestones. Visual elements like photos and videos can also enhance the page's appeal. </p>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap"
+          rel="stylesheet">
 
-<p>My school is special because when my daughter was about to start 9th grade, I was so worried because I didn’t want her to go to her local high school, I’ve had bad experiences at that school and nothing got better in several years, so I started looking for other alternatives. </p> -->
-    </div>
-    <!-- <a href="about-us.php" class="btn btn-success">Know More</a> -->
-</div>
-<div class="col-lg-6">
-  <img src="./assest/images/school1.avif" class="img-fluid" alt="">
-</div>
-   </div>
-  </div>
-</section>
 <style>
-    .course-image{
-      height:190px !important;
-      object-fit:cover;
-     object-position:center;
-     width:100%;
-   
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Space Grotesk',sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    background:#030712;
+    color:white;
+    overflow-x:hidden;
+    position:relative;
+}
+
+/* BACKGROUND */
+
+.bg-grid{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    z-index:-5;
+}
+
+body::before{
+    content:'';
+    position:fixed;
+    width:500px;
+    height:500px;
+    background:#2563eb;
+    border-radius:50%;
+    filter:blur(160px);
+    top:-200px;
+    left:-150px;
+    opacity:.35;
+    z-index:-3;
+}
+
+body::after{
+    content:'';
+    position:fixed;
+    width:500px;
+    height:500px;
+    background:#9333ea;
+    border-radius:50%;
+    filter:blur(160px);
+    bottom:-200px;
+    right:-150px;
+    opacity:.35;
+    z-index:-3;
+}
+
+a{
+    text-decoration:none;
+}
+
+/* NAVBAR */
+
+.navbar{
+    background:rgba(3,7,18,.65);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:18px 0;
+}
+
+.navbar-brand{
+    font-size:34px;
+    font-weight:700;
+    color:white !important;
+}
+
+.navbar-brand span{
+    color:#38bdf8;
+}
+
+.nav-link{
+    color:#cbd5e1 !important;
+    margin-left:24px;
+    font-weight:500;
+    transition:.3s;
+    position:relative;
+}
+
+.nav-link::after{
+    content:'';
+    position:absolute;
+    width:0%;
+    height:2px;
+    background:#38bdf8;
+    left:0;
+    bottom:-5px;
+    transition:.3s;
+}
+
+.nav-link:hover::after{
+    width:100%;
+}
+
+.nav-link:hover{
+    color:#38bdf8 !important;
+}
+
+.login-btn{
+    background:linear-gradient(135deg,#2563eb,#9333ea);
+    color:white;
+    padding:13px 30px;
+    border-radius:14px;
+    font-weight:600;
+    transition:.3s;
+    display:inline-block;
+    box-shadow:0 10px 30px rgba(37,99,235,.35);
+}
+
+.login-btn:hover{
+    transform:translateY(-4px);
+    color:white;
+}
+
+/* HERO */
+
+.hero{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    padding-top:100px;
+}
+
+.hero-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    padding:10px 18px;
+    border-radius:50px;
+    color:#38bdf8;
+    margin-bottom:30px;
+}
+
+.hero h1{
+    font-size:88px;
+    font-weight:700;
+    line-height:1;
+    letter-spacing:-3px;
+}
+
+.hero h1 span{
+    background:linear-gradient(to right,#38bdf8,#9333ea);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    color:#94a3b8;
+    font-size:18px;
+    line-height:2;
+    margin-top:30px;
+    max-width:650px;
+}
+
+.hero-btns{
+    margin-top:45px;
+}
+
+.btn-main{
+    background:linear-gradient(135deg,#2563eb,#9333ea);
+    color:white;
+    padding:18px 40px;
+    border-radius:16px;
+    display:inline-block;
+    font-weight:600;
+    margin-right:18px;
+    transition:.3s;
+    box-shadow:0 12px 40px rgba(37,99,235,.35);
+}
+
+.btn-main:hover{
+    transform:translateY(-5px);
+    color:white;
+}
+
+.btn-glass{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    color:white;
+    padding:18px 40px;
+    border-radius:16px;
+    display:inline-block;
+    transition:.3s;
+}
+
+.btn-glass:hover{
+    background:rgba(255,255,255,.08);
+    color:white;
+}
+
+/* DASHBOARD */
+
+.dashboard-box{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:30px;
+    padding:30px;
+    backdrop-filter:blur(20px);
+    box-shadow:0 20px 80px rgba(0,0,0,.45);
+    position:relative;
+    overflow:hidden;
+}
+
+.dashboard-box::before{
+    content:'';
+    position:absolute;
+    width:180px;
+    height:180px;
+    background:#2563eb;
+    filter:blur(100px);
+    top:-60px;
+    right:-60px;
+    opacity:.4;
+}
+
+.small-card{
+    background:#0f172a;
+    border-radius:24px;
+    padding:24px;
+    margin-bottom:20px;
+    position:relative;
+    z-index:2;
+}
+
+.small-card p{
+    color:#94a3b8;
+}
+
+.small-card h2{
+    font-size:42px;
+    font-weight:700;
+}
+
+.analytics-img{
+    width:100%;
+    border-radius:20px;
+}
+
+.chart-line{
+    width:100%;
+    height:10px;
+    background:#1e293b;
+    border-radius:30px;
+    overflow:hidden;
+    margin-top:15px;
+}
+
+.chart-fill{
+    width:92%;
+    height:100%;
+    background:linear-gradient(to right,#38bdf8,#9333ea);
+}
+
+/* SECTION */
+
+.section{
+    padding:120px 0;
+}
+
+.section-title{
+    text-align:center;
+    margin-bottom:80px;
+}
+
+.section-title h2{
+    font-size:60px;
+    font-weight:700;
+}
+
+.section-title p{
+    color:#94a3b8;
+    margin-top:18px;
+}
+
+/* FEATURE */
+
+.feature-card{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:28px;
+    padding:40px;
+    transition:.4s;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+}
+
+.feature-card::before{
+    content:'';
+    position:absolute;
+    width:120px;
+    height:120px;
+    background:#9333ea;
+    filter:blur(80px);
+    top:-50px;
+    right:-50px;
+    opacity:.25;
+}
+
+.feature-card:hover{
+    transform:translateY(-12px);
+    border-color:#38bdf8;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.feature-icon{
+    width:80px;
+    height:80px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#2563eb,#9333ea);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    margin-bottom:28px;
+}
+
+.feature-card h4{
+    font-size:26px;
+    margin-bottom:15px;
+}
+
+.feature-card p{
+    color:#94a3b8;
+    line-height:1.9;
+}
+
+/* MODULE */
+
+.module-card{
+    background:linear-gradient(145deg,#0f172a,#111827);
+    border-radius:28px;
+    padding:40px 25px;
+    text-align:center;
+    transition:.35s;
+    border:1px solid rgba(255,255,255,.06);
+    position:relative;
+    overflow:hidden;
+}
+
+.module-card::before{
+    content:'';
+    position:absolute;
+    width:100%;
+    height:4px;
+    background:linear-gradient(to right,#38bdf8,#9333ea);
+    top:0;
+    left:0;
+}
+
+.module-card:hover{
+    transform:translateY(-10px) scale(1.03);
+}
+
+.module-card i{
+    font-size:46px;
+    margin-bottom:20px;
+    color:#38bdf8;
+}
+
+.module-card h5{
+    font-size:24px;
+}
+
+/* PORTAL */
+
+.portal-card{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:30px;
+    padding:45px;
+    text-align:center;
+    transition:.4s;
+    overflow:hidden;
+    position:relative;
+}
+
+.portal-card:hover{
+    transform:translateY(-12px);
+    border-color:#38bdf8;
+}
+
+.portal-card i{
+    font-size:70px;
+    margin-bottom:25px;
+    background:linear-gradient(to right,#38bdf8,#9333ea);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.portal-card h4{
+    font-size:30px;
+    margin-bottom:15px;
+}
+
+.portal-card p{
+    color:#94a3b8;
+    margin-bottom:25px;
+}
+
+/* FOOTER */
+
+footer{
+    background:#020617;
+    padding:100px 0 30px;
+    border-top:1px solid rgba(255,255,255,.06);
+}
+
+.footer-logo{
+    font-size:46px;
+    font-weight:700;
+}
+
+.footer-logo span{
+    color:#38bdf8;
+}
+
+.footer-social a{
+    width:55px;
+    height:55px;
+    background:#0f172a;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-left:10px;
+    color:white;
+    transition:.3s;
+}
+
+.footer-social a:hover{
+    background:linear-gradient(135deg,#2563eb,#9333ea);
+    transform:translateY(-5px);
+}
+
+.copyright{
+    margin-top:60px;
+    padding-top:25px;
+    border-top:1px solid rgba(255,255,255,.06);
+    color:#94a3b8;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:991px){
+
+    .hero{
+        text-align:center;
+        padding-top:140px;
     }
-    </style>
 
-<section class="py-5">
-<div class="text-center mb-5">
-  <h2>Our Courses</h2>
-  <p class="text-secondary">Explore Our courses and make a step towards the technology.</p>
-</div>
-<!-- 
-child2 -->
- <div class="container">
-<div class="row">
-  
-  <?php 
-  $query= mysqli_query($con,"SELECT * FROM courses");
- while( $courses=mysqli_fetch_object($query)){?>
+    .hero h1{
+        font-size:58px;
+    }
 
- 
+    .dashboard-box{
+        margin-top:60px;
+    }
 
-  <div class="col-lg-3">
-    <div class="card mt-4">
-      <div>
-        <img src="./AdminLTE-3.05/admin/uploads/<?php echo $courses->image?>" class="img-fluid rounded-top course-image" alt="">
-</div>
-      <div class="card-body">
-<b><?php echo ucfirst($courses->name)?></b>
-<p class="card-text">
-  <b>Duration: </b><?php echo $courses->duration?></br>
-  <!-- <b>Price:</b> 4000/- RS -->
-</p>
-<!-- <button class="btn btn-block btn-primary ">Enroll Now</button> -->
-      </div>
-</div>
-</div>
-<?php } ?>
-</section>
+    .section-title h2{
+        font-size:42px;
+    }
 
-<section class=" py-5 bg-light">
-<div class="text-center mb-5">
-  <h2>Our Teachers</h2>
-  <p class="text-secondary">Learn with our Experienced Teacher.</p>
-</div>
-<div class="container">
-  <div class="row">
-    <?php 
-    $query=mysqli_query($con,"SELECT * FROM accounts WHERE type='teacher'");
-     while( $teacher=mysqli_fetch_object($query)){?>
-     <!-- for($i =0; $i<6; $i++){?> -->
-  <div class="col-lg-4 my-5">
-    <div class="card">
-    <div class="col-7 position-absolute" style="top:-50px">
-            <img src="./assest/images/teacher1.png" alt="" class="mw-100 border rounded-circle">
-</div>
-      <div class="card-body pt-5 mt-4">
-      <h5>Teacher's Name :- <?php echo $teacher->Name ?> </h5>
-          <p class="card-text">
-            <b>Experience :</b> Above 5</br>
-           <i class="fa fa-star text-warning"></i>
-<i class="fa fa-star text-warning"></i> 
-<i class="fa fa-star text-warning"></i>
-   <i class="fa fa-star text-warning"></i>
-</p>
-</div>
-</div>
-      </div>
-      <?php } ?>
-</div>
-</div>
+}
 
+</style>
 
+</head>
 
-  </div>
-</div>
+<body>
 
-</section>
+<div class="bg-grid"></div>
 
-<!-- achivement -->
+<!-- NAVBAR -->
 
-<section class="py-4 text-white"  style="background:#3923a7">
-<div>
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-6">
-        <h2>Achivement</h2>
-        <p>An achievement is a notable accomplishment, something achieved with considerable effort or skill, often signifying the completion of a challenging goal or task.</p>
-      
-        <img src="./assest/images/achive.png" alt="" class="img-fluid">
-      </div>
-      <div class="col-lg-6">
-        <div class="row">
-          <div class="col-lg-4 mx-6 my-4">
-            <div class="border rounded text-warning my-3 text-center ">
-              <div class="card-body mx-6">
-<span><i class="fas fa-graduation-cap fa-2x"></i></span>
-<h2 class="my-2">100%</h2> 
+<nav class="navbar navbar-expand-lg fixed-top">
 
-<h3>Board Result</h3>
-    </div>
-    </div>
-    </div>
-<!-- 
-    //second card -->
-    <div class="col-lg-4 mx-2 my-4">
-            <div class="border rounded text-warning my-3 text-center ">
-              <div class="card-body mx-4">
-                <?php
-                $query=mysqli_query($con,"SELECT * FROM accounts WHERE type='student'");
-               
-                $row_count=mysqli_num_rows($query);
-                
-                ?>
-<span><i class="fa-solid fa-user fa-2x"></i></span>
-<h2 class="my-2"><?php echo $row_count ?></h2> 
+    <div class="container">
 
-<h3>Students</h3>
-    </div>
-    </div>
-    </div>
+        <a class="navbar-brand" href="#">
+            IRIS<span>ERP</span>
+        </a>
 
-<!-- third card -->
-<div class="col-lg-4 mx-2 my-4">
-            <div class="border rounded text-warning my-3 text-center ">
-              <div class="card-body mx-2 my-1">
-                <?php 
-                $query=mysqli_query($con,"SELECT * FROM accounts WHERE type='teacher'");
-                  $row_count=mysqli_num_rows($query);
-                ?>
-<span><i class="fa-solid fa-chalkboard-user fa-2x"></i></span>
-<h2 class="my-2"><?php echo $row_count ?></h2> 
+        <button class="navbar-toggler bg-light"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
 
-<h3>Teacher's</h3>
-    </div>
-    </div>
-    </div>
-<!-- fourth card -->
-<div class="col-lg-4 mx-2 my-4">
-            <div class="border rounded text-warning my-3 text-center ">
-              <div class="card-body mx-4 my-1">
-<span><i class="fa-solid fa-flask fa-2x"></i></span>
-<h2 class="my-2">15</h2> 
+            <span class="navbar-toggler-icon"></span>
 
-<h3>Labs</h3>
-    </div>
-    </div>
-    </div>
+        </button>
 
-    </div>
-    </div>
+        <div class="collapse navbar-collapse" id="navbarNav">
 
-    </div>
-  </div>
-    </div>
-    </section>
+            <ul class="navbar-nav ms-auto align-items-lg-center">
 
-    <!-- testmonial -->
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
 
-    <section class="py-5">
-    <div class="text-center mb-5">
-  <h2>What people say's</h2>
-  <p class="text-secondary">Let's get motivated.</p>
-</div>
-<div class="container">
-  <div class="row">
-    <div class="col-6">
-    <div class="border rounded  position-relative">
-      <div class="p-3 text-center">
-      Dream, dream, dream. Dreams transform into thoughts and thoughts result in action. When young minds are inspired and guided with purpose, they develop the confidence to work hard. This confidence leads them toward excellence and meaningful success in life.
-    </div>
-    <i class="fa fa-quote-left fa-1x position-absolute" style="top:.5rem; left: .5rem;"></i>
-    <div class="d-flex">
-    <img src="./assest/images/apj-banner.png" alt="" class="rounded-circle border" width="100" height="100">
-    <h6 class="my-4 mx-3 text-primary">Dr. A. P. J. Abdul Kalam</h6>
-    </div>
-    </div>
-    </div>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
 
-  <div class="col-6">
-    <div class="border rounded  position-relative">
-      <div class="p-3 text-center">
-     Arise, awake, and stop not till the goal is reached. True success comes from self-belief, discipline, and continuous effort.Such learning builds character, wisdom, and lifelong success. With proper guidance and motivation, individuals can unlock their true potential and achieve greatness.
-    </div>
-    <i class="fa fa-quote-left fa-1x position-absolute" style="top:.5rem; left: .5rem;"></i>
-    <div class="d-flex">
-    <img src="./assest/images/Nelson-Mandela.webp" alt="" class="rounded-circle border" width="100" height="100">
-    <h6 class="my-4 mx-3 text-primary">Nelson Mandela</h6>
-    </div>
-    </div>
-    </div>
-    
-    </div>
+                <li class="nav-item">
+                    <a class="nav-link" href="#modules">Modules</a>
+                </li>
 
-</div>
-    </section>
+                <li class="nav-item">
+                    <a class="nav-link" href="#portal">Portals</a>
+                </li>
 
-    <!-- footer -->
-<footer>
-  <div class="py-5" style="background:#00000088">
-    <div class="container-fluid">
-      <div class="row justify-content-center">
-        
-        <div class="col-lg-12 text-center">
-          <h5 class="text-light mb-3">Social Presence</h5>
+                <li class="nav-item ms-lg-4 mt-3 mt-lg-0">
 
-          <div class="d-flex justify-content-center">
-            <span class="fa-stack mx-2">
-              <i class="fa fa-circle fa-stack-2x"></i>
-             <a href='https://wa.me/9045888330'> <i class="fab fa-whatsapp fa-stack-1x fa-inverse"></i></a>
-            </span>
+                    <?php if(isset($_SESSION['login'])){ ?>
 
-            <span class="fa-stack mx-2">
-              <i class="fa fa-circle fa-stack-2x"></i>
-              <i class="fab fa-instagram fa-stack-1x fa-inverse"></i>
-            </span>
+                        <a href="AdminLTE-3.05/admin/dashboard.php"
+                           class="login-btn">
 
-            <span class="fa-stack mx-2">
-              <i class="fa fa-circle fa-stack-2x"></i>
-              <a href="https://www.youtube.com/@randomeditz1111"><i class="fab fa-youtube fa-stack-1x fa-inverse"></i></a>
-            </span>
+                            Dashboard
 
-            <span class="fa-stack mx-2">
-              <i class="fa fa-circle fa-stack-2x"></i>
-              <a href="https://www.linkedin.com/in/archi-mittal-177b18299/" ><i class="fab fa-linkedin fa-stack-1x fa-inverse"></i></a>
-            </span>
-          </div>
+                        </a>
+
+                    <?php } else { ?>
+
+                        <a href="login.php"
+                           class="login-btn">
+
+                            Login
+
+                        </a>
+
+                    <?php } ?>
+
+                </li>
+
+            </ul>
+
         </div>
 
-      </div>
     </div>
-  </div>
+
+</nav>
+
+<!-- HERO -->
+
+<section class="hero">
+
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+
+                <div class="hero-tag">
+                    🚀 NEXT GENERATION EDUCATION ERP
+                </div>
+
+                <h1>
+                    Smart
+                    <span>Digital ERP</span>
+                    Platform
+                </h1>
+
+                <p>
+                    IRISERP helps schools, colleges and universities automate
+                    admissions, attendance, examinations, fees, analytics,
+                    staff management and complete academic operations
+                    from one intelligent cloud platform.
+                </p>
+
+                <div class="hero-btns">
+
+                    <a href="login.php" class="btn-main">
+                        Get Started
+                    </a>
+
+                    <a href="#features" class="btn-glass">
+                        Explore Features
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+
+                <div class="dashboard-box">
+
+                    <div class="row">
+
+                        <div class="col-6">
+
+                            <div class="small-card">
+
+                                <p>Total Students</p>
+
+                                <h2>25K+</h2>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <div class="small-card">
+
+                                <p>Institutions</p>
+
+                                <h2>450+</h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="small-card">
+
+                        <h5 class="mb-4">
+                            Analytics Dashboard
+                        </h5>
+
+                        <img src="https://cdn-icons-png.flaticon.com/512/2620/2620277.png"
+                             class="analytics-img">
+
+                    </div>
+
+                    <div class="small-card">
+
+                        <div class="d-flex justify-content-between">
+
+                            <span>Attendance Tracking</span>
+
+                            <span class="text-info">
+                                92%
+                            </span>
+
+                        </div>
+
+                        <div class="chart-line">
+                            <div class="chart-fill"></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- FEATURES -->
+
+<section class="section" id="features">
+
+    <div class="container">
+
+        <div class="section-title">
+
+            <h2>Advanced ERP Features</h2>
+
+            <p>
+                Powerful cloud based tools for modern institutions
+            </p>
+
+        </div>
+
+        <div class="row g-4">
+
+            <?php
+
+            $features = [
+
+                ['fa-user-graduate','Student Management'],
+                ['fa-calendar-check','Attendance Tracking'],
+                ['fa-money-bill-wave','Fees Management'],
+                ['fa-file-lines','Exam & Results'],
+                ['fa-chalkboard-user','Teacher Portal'],
+                ['fa-table-list','Timetable'],
+                ['fa-chart-line','Analytics'],
+                ['fa-user-shield','Role Access']
+
+            ];
+
+            foreach($features as $f){
+
+            ?>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        <i class="fa <?= $f[0] ?>"></i>
+                    </div>
+
+                    <h4><?= $f[1] ?></h4>
+
+                    <p>
+                        Smart automation and intelligent management
+                        system with secure cloud accessibility.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <?php } ?>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- MODULES -->
+
+<section class="section" id="modules">
+
+    <div class="container">
+
+        <div class="section-title">
+
+            <h2>ERP Modules</h2>
+
+            <p>
+                Complete ecosystem for institutions
+            </p>
+
+        </div>
+
+        <div class="row g-4">
+
+            <?php
+
+            $modules = [
+
+                'Admissions',
+                'Library',
+                'Transport',
+                'Hostel',
+                'Online Classes',
+                'Certificates',
+                'HR & Payroll',
+                'Notifications'
+
+            ];
+
+            foreach($modules as $m){
+
+            ?>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="module-card">
+
+                    <i class="fa fa-cube"></i>
+
+                    <h5><?= $m ?></h5>
+
+                </div>
+
+            </div>
+
+            <?php } ?>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- PORTALS -->
+
+<section class="section" id="portal">
+
+    <div class="container">
+
+        <div class="section-title">
+
+            <h2>Access Portals</h2>
+
+            <p>
+                Secure role based login system
+            </p>
+
+        </div>
+
+        <div class="row g-4">
+
+            <?php
+
+            $portals = [
+
+                ['fa-user-shield','Admin Portal'],
+                ['fa-chalkboard-user','Teacher Portal'],
+                ['fa-user-graduate','Student Portal'],
+                ['fa-users','Parent Portal']
+
+            ];
+
+            foreach($portals as $p){
+
+            ?>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="portal-card">
+
+                    <i class="fa <?= $p[0] ?>"></i>
+
+                    <h4><?= $p[1] ?></h4>
+
+                    <p>
+                        Secure dashboard access with modern UI.
+                    </p>
+
+                    <a href="login.php" class="btn-main">
+                        Login
+                    </a>
+
+                </div>
+
+            </div>
+
+            <?php } ?>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+
+                <div class="footer-logo">
+                    IRIS<span>ERP</span>
+                </div>
+
+                <p class="mt-4 text-secondary">
+                    Smart cloud ERP platform for schools,
+                    colleges and universities.
+                </p>
+
+            </div>
+
+            <div class="col-lg-6 text-lg-end mt-5 mt-lg-0">
+
+                <div class="footer-social">
+
+                    <a href="#">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+
+                    <a href="#">
+                        <i class="fab fa-github"></i>
+                    </a>
+
+                    <a href="#">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+
+                    <a href="#">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="copyright text-center">
+
+            © 2026 IRISERP —
+            All Rights Reserved
+
+        </div>
+
+    </div>
+
 </footer>
 
-    <section class="py-2 bg-primary text-light text-sm">
-      <div class="container-fluid">
-        Copyright 2025-2026 All Right Reserved .<a href="#" class="text-light text-decoration-none">School Management System</a>
-    </div>
-    </section>
-<?php 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
+
+<?php
 include('footer.php');
 ?>
-

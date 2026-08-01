@@ -1,386 +1,698 @@
-  <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-      </li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <a href="index3.html" class="nav-link">Home</a>
-      </li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <a href="#" class="nav-link">Contact</a>
-      </li>
-    </ul>
+<?php
 
-    <!-- SEARCH FORM -->
-    <form class="form-inline ml-3">
-      <div class="input-group input-group-sm">
-        <input class="form-control form-control-navbar" id="search" type="search" placeholder="Search" aria-label="Search">
-        <div class="input-group-append">
-          <button class="btn btn-navbar" type="submit">
-            <i class="fas fa-search"></i>
-          </button>
-        </div>
-      </div>
-    </form>
+include('includes/config.php');
 
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-      <!-- Messages Dropdown Menu -->
-      <li class="nav-item dropdown">
-        <a class="nav-link" data-toggle="dropdown" href="#">
-          <i class="far fa-comments"></i>
-          <span class="badge badge-danger navbar-badge">3</span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-          <a href="#" class="dropdown-item">
-            <!-- Message Start -->
-            <div class="media">
-              <img src="dist/img/user1-128x128.jpg" alt="User Avatar" class="img-size-50 mr-3 img-circle">
-              <div class="media-body">
-                <h3 class="dropdown-item-title">
-                  Brad Diesel
-                  <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>
-                </h3>
-                <p class="text-sm">Call me whenever you can...</p>
-                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
-              </div>
-            </div>
-            <!-- Message End -->
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <!-- Message Start -->
-            <div class="media">
-              <img src="dist/img/user8-128x128.jpg" alt="User Avatar" class="img-size-50 img-circle mr-3">
-              <div class="media-body">
-                <h3 class="dropdown-item-title">
-                  John Pierce
-                  <span class="float-right text-sm text-muted"><i class="fas fa-star"></i></span>
-                </h3>
-                <p class="text-sm">I got your message bro</p>
-                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
-              </div>
-            </div>
-            <!-- Message End -->
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <!-- Message Start -->
-            <div class="media">
-              <img src="dist/img/user3-128x128.jpg" alt="User Avatar" class="img-size-50 img-circle mr-3">
-              <div class="media-body">
-                <h3 class="dropdown-item-title">
-                  Nora Silvester
-                  <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>
-                </h3>
-                <p class="text-sm">The subject goes here</p>
-                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
-              </div>
-            </div>
-            <!-- Message End -->
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
-        </div>
-      </li>
-      <!-- Notifications Dropdown Menu -->
-      <li class="nav-item dropdown">
-        <a class="nav-link" data-toggle="dropdown" href="#">
-          <i class="far fa-bell"></i>
-          <span class="badge badge-warning navbar-badge">15</span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-          <span class="dropdown-item dropdown-header">15 Notifications</span>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-envelope mr-2"></i> 4 new messages
-            <span class="float-right text-muted text-sm">3 mins</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-users mr-2"></i> 8 friend requests
-            <span class="float-right text-muted text-sm">12 hours</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-file mr-2"></i> 3 new reports
-            <span class="float-right text-muted text-sm">2 days</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
-        </div>
-      </li>
-      <li class="nav-item">
-      <a href="../logout.php" class="nav-link">
-        Logout<i class="fa fa-sign-out-alt"></i>
+?>
+
+
+<?php include('header.php'); ?>
+
+<?php
+
+$institute_id = $_SESSION['institute_id'];
+
+$select=mysqli_query($con,"
+SELECT * FROM institutes 
+WHERE id='$institute_id'
+");
+
+$data=mysqli_fetch_assoc($select);
+?>
+
+<?php 
+$institute_type=$data['system_type'];
+$short_name=$data['short'];
+$logo=$data['logo'];
+
+?>
+<style>
+.nav-sidebar .nav-link{
+    padding:10px 14px !important;
+    border-radius:8px;
+    margin-bottom:4px;
+    transition:0.3s;
+}
+
+.nav-sidebar .nav-link:hover{
+    background:#2563eb !important;
+    color:#fff !important;
+}
+
+.nav-sidebar .nav-link.active{
+    background:#1d4ed8 !important;
+    color:#fff !important;
+}
+
+.nav-sidebar .menu-open > .nav-link{
+    background:#1d4ed8 !important;
+    color:#fff !important;
+}
+
+.nav-sidebar .nav-treeview{
+    display:none;
+    padding-left:15px;
+    overflow:hidden;
+}
+
+.brand-image{
+    width:35px !important;
+    height:35px !important;
+    object-fit:cover;
+    margin-left:0 !important;
+    margin-right:10px !important;
+    float:none !important;
+}
+
+.brand-text{
+    font-size:22px;
+    margin-left:0 !important;
+    padding-left:0 !important;
+}
+</style>
+<!-- Navbar -->
+<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+
+  <!-- Left navbar links -->
+  <ul class="navbar-nav">
+
+    <li class="nav-item">
+      <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+        <i class="fas fa-bars"></i>
       </a>
-      </li>
-    </ul>
-  </nav>
-  <!-- /.navbar -->
+    </li>
 
-  <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <a href="<?=$site_url?>" class="brand-link">
-      <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
-           style="opacity: .8">
-      <span class="brand-text font-weight-light">SMS Admin</span>
+    <li class="nav-item d-none d-sm-inline-block">
+      <a href="dashboard.php" class="nav-link">
+        Home
+      </a>
+    </li>
+
+  </ul>
+
+  <!-- Right navbar links -->
+  <ul class="navbar-nav ml-auto">
+
+    <li class="nav-item">
+      <a href="../../logout.php" class="nav-link">
+        Logout <i class="fa fa-sign-out-alt"></i>
+      </a>
+    </li>
+
+  </ul>
+
+</nav>
+
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+
+  <!-- Brand Logo -->
+  <a href="" class="brand-link">
+
+    <img 
+    src="../../assest/images/institute_image/<?php echo $logo ?>" 
+    alt="Logo"
+    class="brand-image img-circle elevation-3"
+    style="opacity:.8">
+
+    <span class="brand-text font-weight-light">
+      <?php echo ucfirst($short_name) ?>
+    </span>
+
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+
+      <ul class="nav nav-pills nav-sidebar flex-column"
+          data-widget="treeview"
+          role="menu"
+          data-accordion="false">
+
+        <!-- Dashboard -->
+        <li class="nav-item">
+
+          <a href="<?=$site_url?>admin/dashboard.php" 
+             class="nav-link active">
+
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+
+            <p>Dashboard</p>
+
+          </a>
+
+        </li>
+
+        <!-- Manage Accounts -->
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-users"></i>
+
+            <p>
+              Manage Accounts
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+            sidebarMenu(
+              $site_url.'admin/teacher.php?user=teacher',
+              'fas fa-chalkboard-teacher',
+              'Teachers'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/user-account.php?user=student',
+              'fas fa-user-graduate',
+              'Students'
+            );
+            ?>
+
+          </ul>
+
+        </li>
+
+        <!-- Academic Section -->
+
+        <?php if($institute_type=='college'){ ?>
+
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-school"></i>
+
+            <p>
+              Academic Management
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/course1.php',
+              'fas fa-book-open',
+              'Courses'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/branch.php',
+              'fas fa-code-branch',
+              'Branches'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/session.php',
+              'fas fa-calendar',
+              'Academic Session'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/semester.php',
+              'fas fa-layer-group',
+              'Semester'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/add_subject.php',
+              'fas fa-book',
+              'Subjects'
+            );
+
+            ?>
+
+          </ul>
+
+        </li>
+
+        <?php } else { ?>
+
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-school"></i>
+
+            <p>
+              Academic Management
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/classes.php',
+              'fas fa-school',
+              'Classes'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/section.php',
+              'fas fa-users',
+              'Sections'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/add_subject.php',
+              'fas fa-book',
+              'Subjects'
+            );
+ sidebarMenu(
+              $site_url.'admin/session.php',
+              'fas fa-book',
+              'Session'
+            );
+            ?>
+
+          </ul>
+
+        </li>
+
+        <?php } ?>
+
+        <!-- Routine -->
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-clock"></i>
+
+            <p>
+              Class Routine
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/period.php',
+              'fas fa-clock',
+              'Periods'
+            );
+
+            sidebarMenu(
+              $site_url.'admin/timetable.php',
+              'fas fa-calendar-alt',
+              'Time Table'
+            );
+
+            ?>
+
+          </ul>
+
+        </li>
+
+        <!-- Attendance -->
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-user-check"></i>
+
+            <p>
+              Attendance
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/attendance.php',
+              'fas fa-check-circle',
+              'Attendance'
+            );
+
+            ?>
+
+          </ul>
+
+        </li>
+
+        <!-- Accounting -->
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-money-bill"></i>
+
+            <p>
+              Accounting
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/student-fee.php',
+              'fas fa-wallet',
+              'Student Fee'
+            );
+
+            ?>
+
+          </ul>
+
+        </li>
+
+        <!-- Study Material -->
+        <li class="nav-item has-treeview">
+
+          <a href="#" class="nav-link">
+
+            <i class="nav-icon fas fa-book"></i>
+
+            <p>
+              Study Material
+              <i class="fas fa-angle-left right"></i>
+            </p>
+
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            <?php
+
+            sidebarMenu(
+              $site_url.'admin/study.php',
+              'fas fa-file-pdf',
+              'Study Material'
+            );
+
+            ?>
+
+          </ul>
+
+        </li>
+
+        <!-- Feedback -->
+<li class="nav-item has-treeview">
+
+    <a href="#" class="nav-link">
+
+        <i class="nav-icon fas fa-comments"></i>
+
+        <p>
+            Feedback
+            <i class="fas fa-angle-left right"></i>
+        </p>
+
     </a>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-          <li class="nav-item">
-            <a href="<?=$site_url?>AdminLTE-3.05/admin/dashboard.php" class="nav-link active">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>
-                Dashboard
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
+    <ul class="nav nav-treeview">
+
+        <?php
+
+        sidebarMenu(
+            $site_url.'admin/feedback_faq.php',
+            'fas fa-question-circle',
+            'Feedback Question'
+        );
+
+        sidebarMenu(
+            $site_url.'admin/feedback_report.php',
+            'fas fa-chart-bar',
+            'Feedback Report'
+        );
+
+        sidebarMenu(
+            $site_url.'admin/All_feedback_form.php',
+            'fas fa-list',
+            'Feedback Forms'
+        );
+
+        ?>
+
+    </ul>
+
 </li>
+
+<!-- Notice Board -->
 <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-         Manage Account
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/user-account.php?user=teacher" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Teachers</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/user-account.php?user=student" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>students</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/user-account.php?user=parent" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>parents</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/user-account.php?user=Librarian" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Librarian</p>
-                </a>
-              </li>
 
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/user-account.php?user=counseller" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Counseller</p>
-                </a>
-              </li>
-            </ul>
-          </li>
+    <a href="#" class="nav-link">
 
+        <i class="nav-icon fas fa-bullhorn"></i>
 
-<!-- managing class  -->
-     <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                Mention Classes
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/classes.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Classes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/section.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Sections</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/courses.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Courses</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/subject.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Subjects</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/lessons.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Lessons</p>
-                </a>
-              </li>
-            </ul>
-          </li>
+        <p>
+            Notice Board
+            <i class="fas fa-angle-left right"></i>
+        </p>
 
+    </a>
 
-          <!-- managing rountine class -->
+    <ul class="nav nav-treeview">
 
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                Mention Class rountine
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/period.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>period</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/timetable.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Time Table</p>
-                </a>
-              </li>
-             
-            
-            </ul>
-          </li>
+        <?php
 
-<!-- manging exam and grade -->
+        sidebarMenu(
+            $site_url.'admin/admin_notice.php',
+            'fas fa-bell',
+            'Admin Notice'
+        );
 
+        ?>
+
+    </ul>
+
+</li>
+
+<!-- Examination -->
 <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                Mention Examination
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-           
-          </li>
+
+    <a href="#" class="nav-link">
+
+        <i class="nav-icon fas fa-file-alt"></i>
+
+        <p>
+            Examination
+            <i class="fas fa-angle-left right"></i>
+        </p>
+
+    </a>
+
+    <ul class="nav nav-treeview">
+
+        <?php
+
+        sidebarMenu(
+            $site_url.'admin/admin_create.php',
+            'fas fa-plus-circle',
+            'Create Exam'
+        );
+
+        sidebarMenu(
+            $site_url.'admin/exam_datesheet.php',
+            'fas fa-calendar',
+            'Exam Datesheet'
+        );
+
+        sidebarMenu(
+            $site_url.'admin/admit_card.php',
+            'fas fa-id-card',
+            'Admit Card'
+        );
+
+        ?>
+
+    </ul>
+
+</li>
 
 
-          
+
+<!-- QR Generation -->
+<li class="nav-item has-treeview">
+
+    <a href="#" class="nav-link">
+
+        <i class="nav-icon fas fa-qrcode"></i>
+
+        <p>
+            QR Generation
+            <i class="fas fa-angle-left right"></i>
+        </p>
+
+    </a>
+
+    <ul class="nav nav-treeview">
+
+        <?php
+
+        sidebarMenu(
+            $site_url.'admin/qr-mangement.php',
+            'fas fa-qrcode',
+            'QR Management'
+        );
+
+        ?>
+
+    </ul>
+
+</li>
+      
+<li class="nav-item has-treeview">
+
+    <a href="#" class="nav-link">
+
+        <i class="nav-icon fas fa-credit-card"></i>
+
+        <p>
+            Subscription Plan
+            <i class="fas fa-angle-left right"></i>
+        </p>
+
+    </a>
 
 
-          <!-- student attendence -->
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                 Student Attendence
-              <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/attendance.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Attendance </p>
-                </a>
-              </li>
-</ul>
-              </p>
-            </a>
+    <ul class="nav nav-treeview">
+
+        <?php
+
+        sidebarMenu(
+            $site_url.'admin/subscription.php',
+            'fas fa-layer-group',
+            'Subscription'
+        );
+
+
+        sidebarMenu(
+            $site_url.'admin/payment_receipt.php?institute_id='.$institute_id,
+            'fas fa-file-invoice-dollar',
+            'Payment History'
+        );
+
+        ?>
+
+    </ul>
+
+</li>
    
-          </li>
+<li class="nav-item has-treeview">
 
- <!-- student Accounting -->
- <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                Mention Accounting
-</p>
-</a>
-                   <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/student-fee.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Student Fee detail</p>
-                </a>
-              </li>
-            
-            </ul>
-            
-           
-         
-          </li>
+    <a href="#" class="nav-link">
+
+        <i class="nav-icon fas fa-certificate"></i>
+
+        <p>
+          Certification
+            <i class="fas fa-angle-left right"></i>
+        </p>
+
+    </a>
 
 
-          <!-- manage events -->
+    <ul class="nav nav-treeview">
 
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-               Certificate
-              
-              </p>
-            </a>
-              <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/transfer.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Transfer Certificate</p>
-                </a>
-              </li>
-            
+        <?php
 
-                <li class="nav-item">
-                <a href="<?=$site_url?>AdminLTE-3.05/admin/character.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Character Certificate</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          <!-- manage other -->
-
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-                Mention others
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-
-          </li>
+        sidebarMenu(
+            $site_url.'admin/transfer.php',
+            'fas fa-layer-group',
+            'Certification'
+        );
 
 
-          <!-- manage system -->
+    
 
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-users"></i>
-              <p>
-              FeedBack
-                <i class="fas fa-angle-left right"></i>
-              </p>
-            </a>
-          
-          </li>
+        ?>
 
-      </nav>
-      <!-- /.sidebar-menu -->
-    </div>
-    <!-- /.sidebar -->
-  </aside>
+    </ul>
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
+</li>
+      </ul>
+      
+
+    </nav>
+
+  </div>
+
+</aside>
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+    <script>
+ $(document).ready(function () {
+
+    $(document).on('click', function (e) {
+
+        let sidebar = $('.main-sidebar');
+        let toggleBtn = $('[data-widget="pushmenu"]');
+
+        // outside click detect
+        if (
+            !sidebar.is(e.target) &&
+            sidebar.has(e.target).length === 0 &&
+            !toggleBtn.is(e.target) &&
+            toggleBtn.has(e.target).length === 0
+        ) {
+
+            // mobile sidebar open ho to close karo
+            if ($('body').hasClass('sidebar-open')) {
+                $('[data-widget="pushmenu"]').trigger('click');
+            }
+        }
+    });
+
+});
+    </script>
+  <!-- <script>
+
+$(document).ready(function(){
+
+    $('.has-treeview > .nav-link').click(function(e){
+
+        e.preventDefault();
+
+        let parent = $(this).parent();
+
+        let submenu = $(this).siblings('.nav-treeview');
+
+        if(parent.hasClass('menu-open')){
+
+            parent.removeClass('menu-open');
+
+            submenu.slideUp(200);
+
+        } else {
+
+            $('.has-treeview').removeClass('menu-open');
+            $('.nav-treeview').slideUp(200);
+
+            parent.addClass('menu-open');
+
+            submenu.slideDown(200);
+
+        }
+
+    });
+
+});
+
+</script> -->

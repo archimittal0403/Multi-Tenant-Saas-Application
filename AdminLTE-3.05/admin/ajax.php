@@ -1,6 +1,7 @@
 <?php
 session_start(); // ✅ MUST
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -8,44 +9,352 @@ include_once('includes/config.php');
 include_once('includes/functions.php');
 
 
-if (isset($_POST['action']) && $_POST['action'] === 'get_sections') {
+$institute_id = $_SESSION['institute_id'];
+      $institute_type=$_SESSION['system_type'];
+      $institute_code=$_SESSION['institute_code'];
+
+
+if(isset($_POST['action']) && $_POST['action'] === 'get_sections'){
 
     $class_id = $_POST['class_id'] ?? '';
 
-    if (empty($class_id)) {
+    $options = '<option value="">Select Section</option>';
+
+    if(empty($class_id)){
+
         echo json_encode([
-            'status' => false,
-            'options' => '<option value="">Select section</option>'
+            'status'  => false,
+            'options' => $options
         ]);
+
         exit;
     }
 
-    $class_meta = get_metadata($class_id, 'section');
-    $options = '<option value="">Select section</option>';
+    // DIRECT POSTS TABLE QUERY
+    $sections = get_posts([
+        'type'   => 'section',
+        'parent' => $class_id
+    ]);
 
-    if (!empty($class_meta)) {
-        foreach ($class_meta as $meta) {
+    if(!empty($sections)){
 
-            // ✅ get_posts returns ARRAY
-            $section_arr = get_posts(['id' => $meta->meta_value]);
+        foreach($sections as $section){
 
-            if (!empty($section_arr)) {
-                $section = $section_arr[0]; // ✅ FIRST OBJECT
-
-                $options .= '<option value="'.$section->id.'">'
-                          . $section->title .
-                          '</option>';
-            }
+            $options .= '
+            <option value="'.$section->id.'">
+                '.$section->title.'
+            </option>';
         }
     }
 
     echo json_encode([
-        'status' => true,
+        'status'  => true,
+        'options' => $options
+    ]);
+
+    exit;
+}
+
+if(isset($_POST['action']) && $_POST['action']=== 'get_branch'){
+
+    $course_id = $_POST['course_id'] ?? '';
+
+    if (empty($course_id)) {
+        echo json_encode([
+            'status' => false,
+            'options' => '<option value="">Select branch</option>'
+        ]);
+        exit;
+    }
+
+    $branches = get_posts([
+        'type'=>'branch',
+        'parent'=>$course_id
+    ]);
+
+    $options = '<option value="">Select branch</option>';
+
+    if(!empty($branches)){
+        foreach($branches as $branch){
+            $options .= '<option value="'.$branch->id.'">'.$branch->title.'</option>';
+        }
+    }
+
+    echo json_encode([
+        'status' => !empty($branches),
         'options' => $options
     ]);
     exit;
 }
+if(isset($_POST['action']) && $_POST['action']=='get_report_data'){
 
+    $session = $_POST['session'];
+
+    $bar_labels = [];
+    $bar_data   = [];
+
+    // 🔹 Histogram (Subject-wise avg)
+    $q1 = mysqli_query($con,"
+        SELECT 
+            m.subject_id,
+            s.title as subject_name,
+          COALESCE(AVG(m.rating),0) as avg_rating
+        FROM meta_teacher m
+        JOIN teacher_feedback f ON m.feedback_id = f.id
+        JOIN posts s ON m.subject_id = s.id
+        WHERE f.session = '$session' AND f.institute_id='$institute_id'
+        GROUP BY m.subject_id 
+    ");
+
+    while($row = mysqli_fetch_assoc($q1)){
+        $bar_labels[] = $row['subject_name'];
+        $bar_data[]   = round($row['avg_rating'],2);
+    }
+
+    // 🔹 Pie Chart
+    $pie_labels = ['Very Good','Good','Average','Bad'];
+    $pie_data   = [0,0,0,0];
+
+    $q2 = mysqli_query($con,"
+        SELECT m.rating
+        FROM meta_teacher m
+        JOIN teacher_feedback f ON m.feedback_id = f.id
+        WHERE f.session = '$session' AND f.institute_id='$institute_id'
+    ");
+
+    while($row = mysqli_fetch_assoc($q2)){
+        $r = $row['rating'];
+
+        if($r >= 4) $pie_data[0]++;
+        elseif($r >= 3) $pie_data[1]++;
+        elseif($r >= 2) $pie_data[2]++;
+        else $pie_data[3]++;
+    }
+$i = 1;
+$table_html = "";
+
+$i = 1;
+$table_html = "";
+
+$q3 = mysqli_query($con,"
+    SELECT 
+        ts.subject_id,
+        s.title as subject_name,
+        a.Name as teacher_name,
+        a.roll_no,
+        AVG(m.rating) as avg_rating
+
+    FROM teacher_subjects ts
+
+    JOIN accounts a 
+        ON ts.teacher_id = a.id
+
+    JOIN posts s 
+        ON ts.subject_id = s.id
+
+    LEFT JOIN teacher_feedback f 
+        ON f.teacher_id = ts.teacher_id 
+        AND f.session = ts.session_id
+
+    LEFT JOIN meta_teacher m 
+        ON m.feedback_id = f.id 
+        AND m.subject_id = ts.subject_id
+
+    WHERE ts.session_id = '$session'
+    AND a.type = 'teacher' AND a.institute_id='$institute_id'
+
+    GROUP BY ts.subject_id, ts.teacher_id
+");
+
+while($row = mysqli_fetch_assoc($q3)){
+
+$avg = !empty($row['avg_rating']) 
+    ? round((float)$row['avg_rating'],1) 
+    : 0;
+
+    if($avg >= 4){
+        $level = "Very Good";
+    } elseif($avg >= 3){
+        $level = "Good";
+    } elseif($avg >= 2){
+        $level = "Average";
+    } else {
+        $level = "Bad";
+    }
+
+    $table_html .= "
+    <tr>
+        <td>".$i++."</td>
+        <td>".$row['subject_name']."</td>
+        <td>".$row['teacher_name']."</td>
+        <td>".$row['roll_no']."</td>
+        <td>".$avg."</td>
+        <td>".$level."</td>
+    </tr>";
+}
+
+    echo json_encode([
+        'bar_labels'=>$bar_labels,
+        'bar_data'=>$bar_data,
+        'pie_labels'=>$pie_labels,
+        'pie_data'=>$pie_data,
+        'table_html' => $table_html
+    ]);
+
+    exit;
+}
+if(isset($_POST['action']) && $_POST['action']=='get_subject'){
+
+    $parent_id = $_POST['branch_id'] ?? $_POST['class_id'] ?? '';
+
+    $subjects = get_posts([
+        'type'   => 'subject',
+        'parent' => $parent_id
+    ]);
+
+    $options = '<option value="">Select Subject</option>';
+
+    if(!empty($subjects)){
+        foreach($subjects as $sub){
+            $options .= '<option value="'.$sub->id.'">'.$sub->title.'</option>';
+        }
+    }
+
+    echo json_encode([
+        'status'  => !empty($subjects),
+        'options' => $options
+    ]);
+    exit;
+}
+if(isset($_POST['action']) && $_POST['action']=='get_exam'){
+
+    $course_id   = $_POST['course_id'] ?? 0;
+    $branch_id   = $_POST['branch_id'] ?? 0;
+    $semester_id = $_POST['semester_id'] ?? 0;
+    $session_id  = $_POST['session_id'] ?? 0;
+
+    $class_id    = $_POST['class_id'] ?? 0;
+    $section_id  = $_POST['section_id'] ?? 0;
+
+    // ===============================
+    // COLLEGE QUERY
+    // ===============================
+    if($course_id && $branch_id && $semester_id && $session_id){
+
+        $query = mysqli_query($con,"
+            SELECT ce.*, et.exam_type
+            FROM create_exam ce
+
+            LEFT JOIN exam_type et 
+            ON ce.exam_type_id = et.id
+
+            WHERE ce.course_id='$course_id'
+            AND ce.branch_id='$branch_id'
+            AND ce.semester_id='$semester_id'
+            AND ce.session_id='$session_id'
+
+            AND ce.status='active'
+            AND et.status='active'
+            AND ce.institute_id='$institute_id'
+
+            LIMIT 1
+        ");
+
+    }
+
+    // ===============================
+    // SCHOOL QUERY
+    // ===============================
+    else if($class_id && $section_id){
+
+        $query = mysqli_query($con,"
+            SELECT ce.*, et.exam_type
+            FROM create_exam ce
+
+            LEFT JOIN exam_type et
+            ON ce.exam_type_id = et.id
+
+            WHERE ce.class_id='$class_id'
+            AND ce.section_id='$section_id'
+
+            AND ce.status='active'
+            AND et.status='active'
+            AND ce.institute_id='$institute_id'
+
+            LIMIT 1
+        ");
+
+    }
+
+    else{
+
+        echo json_encode([
+            'status'=>false,
+            'message'=>'Missing Filters'
+        ]);
+        exit;
+    }
+
+    // ===============================
+    // RESPONSE
+    // ===============================
+    if(mysqli_num_rows($query)>0){
+
+        $row=mysqli_fetch_assoc($query);
+
+        echo json_encode([
+            'status'=>true,
+            'exam_id'=>$row['id'],
+            'exam_type'=>$row['exam_type'],
+            'start_date'=>$row['start_date'],
+            'end_date'=>$row['end_date']
+        ]);
+
+    }else{
+
+        echo json_encode([
+            'status'=>false,
+            'message'=>'No Exam Found'
+        ]);
+    }
+
+    exit;
+}
+if(isset($_POST['action']) && $_POST['action']=== 'get_semester'){
+
+    $course_id = $_POST['course_id'] ?? '';
+
+    if (empty($course_id)) {
+        echo json_encode([
+            'status' => false,
+            'options' => '<option value="">Select semester</option>'
+        ]);
+        exit;
+    }
+
+    $semesters = get_posts([
+        'type'=>'semester',
+        'parent'=>$course_id
+    ]);
+
+    $options = '<option value="">Select semester</option>';
+
+    if(!empty($semesters)){
+        foreach($semesters as $semester){
+      $total_sem=(int)$semester->title;
+          for($i=1;$i<=$total_sem;$i++){//1-8
+  $options .= '<option value="'.$i.'">'.$i.'</option>';
+          }
+           
+        }
+    }
+
+    echo json_encode([
+        'status' => !empty($semesters),
+        'options' => $options
+    ]);
+    exit;
+}
 
 if (!empty($_POST['action']) && $_POST['action'] === 'fill_feedback') {
 
@@ -237,88 +546,75 @@ if($date!=$current_date){
   ]);
   exit;
 }
-$sql = "
-SELECT 
-  a.item_id, 
-  s.Name,
-  MAX(CASE WHEN a.meta_key='status' THEN a.meta_value END) as status,
-  MAX(CASE WHEN a.meta_key='at_class' THEN a.meta_value END) as at_class,
-  MAX(CASE WHEN a.meta_key='at_section' THEN a.meta_value END) as at_section,
-  MAX(CASE WHEN a.meta_key='at_subject' THEN a.meta_value END) as at_subject,
-  MAX(CASE WHEN a.meta_key='dob' THEN a.meta_value END) as dob
-FROM attendance1 a
-JOIN accounts s ON s.id = a.item_id
+$sql="SELECT a.user_id,s.Name,a.status FROM
+attendance a 
+JOIN accounts s ON s.id=a.user_id
+JOIN usermeta uc ON uc.user_id=a.user_id AND uc.meta_key='st_class'
+JOIN usermeta us ON us.user_id=a.user_id AND us.meta_key='st_section'
 WHERE s.type='student'
-GROUP BY a.item_id
-HAVING 1=1
-";
-$params=[];
-$types="";
-if($class_id!=''){
-  $sql.=" AND at_class=?";
-}
- $params[]=$class_id;
-  $types .="s";
-
-if($section_id!=''){
-  $sql.=" AND at_section=?";
-}
-$params[]=$section_id;
-$types .="s";
-
-if($subject_id!=''){
-  $sql.=" AND at_subject=?";
-}
- $params[]=$subject_id;
-  $types .="s";
-
-if($date!=''){
-  $sql .= " AND dob = ?";
-}
- $params[]=$date;
-  $types .="s";
-
-
-$query = $con->prepare($sql);
-if(!empty($params)){
-  $query->bind_param($types, ...$params);
-}
+AND uc.meta_value=?
+AND us.meta_value=?
+AND a.subject_id=?
+AND a.attendance_date=?";
+$query=$con->prepare($sql);
+$query->bind_param("ssis",$class_id,$section_id,$subject_id,$date);
 $query->execute();
 $result=$query->get_result();
 while($row=$result->fetch_assoc()){
   $count++;
-    $statusText  = ($row['status'] == 'P') ? 'Present' : 'Absent';
-  $statusClass = ($row['status'] == 'P') ? 'btn-success' : 'btn-danger';
-  $data[]=[
-    'Sno'=>$count,
-    'Enroll_ID'=>$row['item_id'],
-    'Student_Name'=>$row['Name'],
-    
-   'Status'=>'<button type="button" class="btn btn-sm btn-danger toggle-att" data-id="'.$row['item_id'].'"data-status="'.$row['status'].'">'.$statusText.'</button>
-   <button class="btn btn-sm btn-primary upd-att" data-id="'.$row['item_id'].'">Update</button>'
-  ];
-}
 
+$statusText  = ($row['status']=='P') ? 'Present' : 'Absent';
+$statusClass = ($row['status']=='P') ? 'btn-success' : 'btn-danger';
+
+$data[]=[
+  'Sno'=>$count,
+  'Enroll_ID'=>$row['user_id'],
+  'Student_Name'=>$row['Name'],
+  'Status'=>'
+<button type="button" class="btn btn-sm '.$statusClass.' toggle-att"
+data-id="'.$row['user_id'].'" data-status="'.$row['status'].'">'.$statusText.'</button>
+
+<button class="btn btn-sm btn-primary upd-att"
+data-id="'.$row['user_id'].'"
+data-subject_id="'.$subject_id.'"
+data-date="'.$date.'">
+Update
+</button>'
+];
+
+}
 echo json_encode([
   "draw"=>intval($_POST['draw'] ?? 1),
   "recordsTotal"=>count($data),
   "recordsFiltered"=>count($data),
   "data"=>$data
-]);
-exit;
+  ]);
+  exit();
 }
 
+if(isset($_POST['action']) && $_POST['action']=='update_single_attendance'){
 
-if(!empty($_POST['action']) && $_POST['action']=='update_attendace'){
-  $enroll_id=$_POST['enroll_id'];
-  $status=$_POST['status'];
- update_attendance($enroll_id,'status',$status);
+    $meta_id = $_POST['meta_id'];
+    $status  = $_POST['status'];
 
-  echo json_encode([
-    'success'=>true
+    mysqli_query($con,"
+    UPDATE attendance_meta
+    SET status='$status'
+    WHERE id='$meta_id'
+    ");
+   updateSemesterAttendance(
+        $user_id,
+        $course_id,
+        $branch_id,
+        $session_id,
+        $semester
+    );
+    echo json_encode([
+        'status'=>true,
+        'message'=>'Attendance Updated Successfully'
     ]);
 
-  exit;
+    exit;
 }
 
 if(!empty($_POST['action']) && $_POST['action']=='mark_attendance'){
@@ -341,24 +637,25 @@ $types="";
            $params[]=$section_id;
   $types .="s";
     }
-    if($subject_id!=''){
-  $q=$con->prepare("SELECT semester FROM `courses` WHERE id=?");
-  $q->bind_param("i",$subject_id);
-  $q->execute();
-  $q_result=$q->get_result();
-  $r=$q_result->fetch_assoc();
-  $semester=$r['semester'];
-    }
-    if($semester!=''){
-      $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
-          $params[]=$semester;
-  $types .="s";
-    }
+  //   if($subject_id!=''){
+  // $q=$con->prepare("SELECT semester FROM `courses` WHERE id=?");
+  // $q->bind_param("i",$subject_id);
+  // $q->execute();
+  // $q_result=$q->get_result();
+  // $r=$q_result->fetch_assoc();
+  // $semester=$r['semester'];
+  //   }
+  //   if($semester!=''){
+  //     $sql.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
+  //         $params[]=$semester;
+  // $types .="s";
+  //   }
     $query=$con->prepare($sql);
    if(!empty($params)){
   $query->bind_param($types, ...$params);
-$query->execute();
+
   }
+  $query->execute();
 $query_result=$query->get_result();
     while($row_fetch=$query_result->fetch_assoc()){
         $count++;
@@ -369,10 +666,10 @@ $query_result=$query->get_result();
         $at_class_id->bind_param("s",$at_class);
         $at_class_id->execute();
         $at_class_id_result=$at_class_id->get_result();
-        $class_fetch=$at_class_id->fetch_assoc();
+        $class_fetch=$at_class_id_result->fetch_assoc();
         $at_class_name=$class_fetch['title'];
    $at_section=get_usermeta($enroll_id,'st_section');
-        $at_section_id=$con->prepare("SELECT title FROM `section` WHERE id=?");
+        $at_section_id=$con->prepare("SELECT title FROM `posts` WHERE id=?");
         $at_section_id->bind_param("s",$at_section);
         $at_section_id->execute();
         $at_section_id_result=$at_section_id->get_result();
@@ -384,7 +681,8 @@ $query_result=$query->get_result();
         'Class'=>$at_class_name,
         'Section'=>$at_section_name,
         'Student_name'=>$name,
-        'Action'=>'<button type="button" class="btn btn-sm btn-danger toggle-att" data-id="'.$enroll_id.'"data-status="A">Absent</button>'
+        'Action'=>'<button type="button" class="btn btn-sm btn-danger toggle-att" data-id="'.$enroll_id.'"data-status="A">Absent</button>
+        <input type="hidden" name="att['.$enroll_id.']" value="A">'
      
     ];
     }
@@ -396,47 +694,107 @@ echo json_encode([
 ]);
 exit;
 }
-if(!empty($_POST['action']) && $_POST['action']=='saveAttendance'){
-    $attendance=$_POST['att'] ?? [];
-    $date=$_POST['dob']?? date('Y-m-d');
-    $class=$_POST['at_class']?? '';
-    $section=$_POST['at_section']?? '';
-    $teacher=$_POST['at_teacher']?? '';
-    $subject=$_POST['at_subject']?? '';
-    if(empty($attendance)){
-    echo json_encode(["status"=>false,"message"=>"Attendance empty"]);
+// 
+
+if(isset($_POST['action']) && $_POST['action'] == 'save_attendance'){
+$class_id = $_POST['class_id'] ?? '';
+$section_id = $_POST['section_id'] ?? '';
+$academic_session = $_POST['academic_session'] ?? '';
+$course_id = $_POST['course_id'] ?? '';
+$branch_id = $_POST['branch_id'] ?? '';
+$session_id = $_POST['session_id'] ?? '';
+$semester = $_POST['semester'] ?? '';
+    $subject_id = $_POST['subject_id'];
+    $date = $_POST['attendance_date'];
+$attendance_data = $_POST['attendance'] ?? [];
+
+
+$check = mysqli_query($con,"
+SELECT id FROM attendance 
+WHERE
+(
+    (
+        class_id='$class_id'
+        AND section_id='$section_id'
+        AND academic_session='$academic_session'
+    )
+
+    OR
+
+    (
+        course_id='$course_id'
+        AND branch_id='$branch_id'
+        AND session_id='$session_id'
+        AND semester='$semester'
+    )
+)
+
+AND subject_id='$subject_id'
+AND attendance_date='$date'
+AND institute_id='$institute_id'
+");
+
+if(mysqli_num_rows($check) > 0){
+
+    echo json_encode([
+        'status' => false,
+        'message' => 'Attendance already exists for this date'
+    ]);
     exit;
 }
-    foreach($attendance as $student_id=>$status){
-     
-      $result=  $con->prepare("INSERT INTO `attendance1` (`item_id`,`meta_key`,`meta_value`) 
+    // 1. INSERT MAIN ATTENDANCE ROW
+ $q = mysqli_query($con,"
+    INSERT INTO attendance 
+    (
+        class_id,
+        section_id,
+        academic_session,
+        course_id,
+        branch_id,
+        session_id,
+        semester,
+        subject_id,
+        attendance_date,
+        institute_id
+    )
+    VALUES 
+    (
+        '$class_id',
+        '$section_id',
+        '$academic_session',
+        '$course_id',
+        '$branch_id',
+        '$session_id',
+        '$semester',
+        '$subject_id',
+        '$date',
+        '$institute_id'
+    )
+");
+    $attendance_id = mysqli_insert_id($con);
+
+    // 2. INSERT STUDENT META
+foreach($attendance_data as $a){
+
+    $user_id = $a['user_id'];
+
+    $status = ($a['status'] == 'present') ? 'P' : 'A';
+
+    mysqli_query($con,"
+        INSERT INTO attendance_meta
+        (attendance_id, user_id, status)
         VALUES
-        (?,?,?),
-        (?,?,?),
-        (?,?,?),
-        (?,?,?),
-        (?,?,?),
-        (?,?,?)
-        ");
-        if(!$result){
-          echo mysqli_error($con);
-          exit;
-        }
-        $result->bind_param("ississississississ",
-         $student_id, $status_key, $status,
-    $student_id, $dob_key, $date,
-    $student_id, $class_key, $class,
-    $student_id, $section_key, $section,
-    $student_id, $teacher_key, $teacher,
-    $student_id, $subject_key, $subject);
-    $result->execute();
-    $result->close();
-    }
-    echo json_encode(["status" => true, "message" => "success"]);
-exit;
-
+        ('$attendance_id','$user_id','$status')
+    ");
 }
+    echo json_encode([
+        'status' => true,
+        'message' => 'Attendance Saved Successfully'
 
+    ]);
+
+    exit;
+}
 if (!empty($_POST['action']) && $_POST['action'] === 'get_parent') {
 
     $class_id   = $_POST['class_id'] ?? '';
@@ -577,8 +935,8 @@ if(!empty($_POST['action']) && $_POST['action']=='get_result_details'){
     
     $class_id=$_POST['class_id'] ?? '';
     $section_id=$_POST['section_id'] ?? '';
-    $subject_id=$_POST['subject_id'] ?? '';
-
+     $subject_id=$_POST['subject_id'] ?? '';
+ $term_id=$_POST['term_id'] ?? '';
     $data1=[];
     $count=0;
     $sql1="SELECT * FROM `accounts` WHERE type=?";
@@ -594,24 +952,24 @@ $types = "s";
         $params[]=$section_id;
         $types .="s";
     } 
-    $semester = '';
-    if($subject_id!=''){
+    // $semester = '';
+    // if($subject_id!=''){
 
-        $sub_q = $con->prepare("SELECT semester FROM `courses` WHERE id=? LIMIT 1");
-        $sub_q->bind_param("i",$subject_id);
-        $sub_q->execute();
-        $sub_q_result=$sub_q->get_result();
+    //     $sub_q = $con->prepare("SELECT semester FROM `courses` WHERE id=? LIMIT 1");
+    //     $sub_q->bind_param("i",$subject_id);
+    //     $sub_q->execute();
+    //     $sub_q_result=$sub_q->get_result();
 
-    if($sub_q_result && $sub_q_result->num_rows>0){
-        $sub_row = $sub_q_result->fetch_assoc();
-        $semester = $sub_row['semester'];
-    }
-    }
-    if($semester!=''){
-      $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
-      $params[]=$semester;
-      $types .="i";
-    }
+    // if($sub_q_result && $sub_q_result->num_rows>0){
+    //     $sub_row = $sub_q_result->fetch_assoc();
+    //     $semester = $sub_row['semester'];
+    // }
+    // }
+    // if($semester!=''){
+    //   $sql1.=" AND id IN (SELECT user_id FROM `usermeta` WHERE meta_key='semester' AND meta_value=?)";
+    //   $params[]=$semester;
+    //   $types .="i";
+    // }
     $query=$con->prepare($sql1);
     $query->bind_param($types, ...$params);
     $query->execute();
@@ -634,12 +992,29 @@ $res_section_id->execute();
 $res_section_id_result=$res_section_id->get_result();
 $section_fetch=$res_section_id_result->fetch_assoc();
 $res_section_name=$section_fetch['title']?? 'N/A';
+
+// result marks
+//first teacher_action the result_id from the resuly table
+$result_id=0;
+$select=mysqli_query($con,"SELECT result_id FROM `result` WHERE class_id='$class_id' AND section_id='$section_id' AND subject_id='$subject_id' AND term_id='$term_id'");
+while($row_fet=mysqli_fetch_assoc($select)){
+  $result_id=$row_fet['result_id'];
+}
+// get the marks from result-marks
+$mark_value='';
+$marks=mysqli_query($con,"SELECT marks FROM `result_marks` WHERE result_id='$result_id' AND student_id='$enroll_id'");
+while($row=mysqli_fetch_assoc($marks)){
+  $mark_value=$row['marks'];
+}
+
+
+
         $data1[]=[
             'Sno'=>$count,
 'Enroll_ID'=>$enroll_id,
 
 'Student_Name'=>ucfirst($name),
-'Marks'=>'n/a'
+'Marks'=>$mark_value
         ];
     }
 
@@ -651,66 +1026,351 @@ $res_section_name=$section_fetch['title']?? 'N/A';
     ]);
     exit;
 }
- if (!empty($_POST['action']) && $_POST['action'] === 'get_user_details') {
-        $class_id   = $_POST['class_id'] ?? '';
-  $section_id = $_POST['section_id'] ?? '';
 
-                 $data=[];
-                  $sql="SELECT * FROM accounts WHERE type=?";
-                  $params=['student'];
-                  $types = "s";
-                   if($class_id!=''){
-                      $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_class' AND meta_value=?)"; 
-                      $params[]=$class_id;
-                      $types .="s";
-                     } 
-                     if($section_id!=''){ 
-                        $sql.=" AND id IN (SELECT user_id FROM usermeta WHERE meta_key='st_section' AND meta_value=?)";
-                        $params[]=$section_id;
-                        $types .="s";
-                      }
-                       $query=$con->prepare($sql); 
-                          $query->bind_param($types, ...$params);
-                          $query->execute();
-                          $query_result=$query->get_result();
-                       while($row=$query_result->fetch_assoc()){ 
-                        $user_id=$row['id'];
-                        $user_edit='<a href="user-account.php?class='.$class_id.'&section='.$section_id.'&edit_student='.$user_id.'" class ="btn btn-sm btn-success"><i class="fa fa-pencil-alt"></i></a>';
-                        $user_delete='<a href="user-account.php?class='.$class_id.'&section='.$section_id.'&delete_student='.$user_id.'" class="btn btn-sm btn-success mx-2"><i class="fa fa-trash-alt"></i></a>' ;
-                        $dob=get_usermeta($user_id,'dob'); 
-                        $phone=get_usermeta($user_id,'mobile');
-                         $st_class=get_usermeta($user_id,'st_class'); 
-                         $st_section=get_usermeta($user_id,'st_section');
-                         $data[] = [ 
-                           'enroll'=> $row['id'] , 
-                           'class'=>$st_class, 
-                           'section'=>$st_section,
-                            'photo'=>'<img src="dist/img/akg-logo.png" width="40">', 
-                            'name'=>$row['Name'], 
-                            'email'=>$row['email'], 
-                            'phone'=>$phone, 
-                            'dob'=>$dob, 
-                            'action'=>$user_edit.''.$user_delete,
-       
-                           ]; 
-                        }
-                        echo json_encode([ 
-                           "draw" => intval($_POST['draw'] ?? 1),
-                         "recordsTotal"=>count($data),
-                          "recordsFiltered"=>count($data), 
-                          "data"=>$data 
-                        ]);
-                         exit; 
-                        }
+if(isset($_POST['action']) && $_POST['action']=='get_user_details'){
+
+    $class_id     = $_POST['class_id'] ?? '';
+    $section_id   = $_POST['section_id'] ?? '';
+    $session_id   = $_POST['session_id'] ?? '';
+
+    $course_id    = $_POST['course_id'] ?? '';
+    $branch_id    = $_POST['branch_id'] ?? '';
+    $semester_id  = $_POST['semester_id'] ?? '';
+
+    $data = [];
+    $count = 0;
+
+    $sql = "SELECT * FROM accounts 
+            WHERE type='student'
+            AND institute_id='$institute_id'";
+
+    // ================= SCHOOL FILTER =================
+
+    if(!empty($class_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE meta_key='st_class'
+            AND meta_value='$class_id'
+        )";
+    }
+
+    if(!empty($section_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE meta_key='st_section'
+            AND meta_value='$section_id'
+        )";
+    }
+
+    // ================= COLLEGE FILTER =================
+
+    if(!empty($course_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE 
+            (meta_key='st_course' OR meta_key='course_name')
+            AND meta_value='$course_id'
+        )";
+    }
+
+    if(!empty($branch_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE 
+            (meta_key='st_branch' OR meta_key='branch_name')
+            AND meta_value='$branch_id'
+        )";
+    }
+
+    // ================= SEMESTER FILTER =================
+
+    if(!empty($semester_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE meta_key='semester'
+            AND meta_value='$semester_id'
+        )";
+    }
+
+    // ================= SESSION FILTER =================
+
+    if(!empty($session_id)){
+
+        $sql .= " AND id IN (
+            SELECT user_id FROM usermeta
+            WHERE meta_key='session'
+            AND meta_value='$session_id'
+        )";
+    }
+
+    $query = mysqli_query($con,$sql);
+
+    while($row = mysqli_fetch_assoc($query)){
+
+        $count++;
+
+        $photo = get_usermeta($row['id'],'student_photo');
+
+        $img = !empty($photo)
+        ? '<img src="uploads/student_photo/'.$photo.'" width="40">'
+        : '';
+
+        $nested = [
+
+            'sno'      => $count,
+
+            'roll_no'  => $row['roll_no'],
+
+            'photo'    => $img,
+
+            'name'     => $row['Name'],
+
+            'email'    => $row['email'],
+
+            'phone'    => get_usermeta($row['id'],'mobile'),
+
+            'dob'      => get_usermeta($row['id'],'dob'),
+
+            'action'   => '
+
+            <a href="?edit_student='.$row['id'].'"
+            class="btn btn-primary btn-sm">
+            Edit
+            </a>
+
+            <a href="?delete_student='.$row['id'].'"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm(\'Delete?\')">
+            Delete
+            </a>'
+        ];
+
+        // ================= DYNAMIC FIELDS =================
+
+        $fields = mysqli_query($con,"
+        SELECT * FROM fields
+        WHERE institute_id='$institute_id'
+        AND form_type='student'
+        ");
+
+        while($f = mysqli_fetch_assoc($fields)){
+
+            $nested[$f['field_key']] =
+            get_usermeta($row['id'],$f['field_key']);
+        }
+
+        $data[] = $nested;
+    }
+
+    echo json_encode([
+
+        "draw" => intval($_POST['draw'] ?? 1),
+
+        "recordsTotal" => count($data),
+
+        "recordsFiltered" => count($data),
+
+        "data" => $data
+    ]);
+
+    exit;
+}
+
+
+// teacher report 
+// ================= REPORT DATA =================
+
+if(isset($_POST['action']) && $_POST['action'] == 'get_report_data'){
+
+    $institute_id   = $_SESSION['institute_id'];
+    $institute_type = $_SESSION['system_type'];
+
+    $session = mysqli_real_escape_string($con,$_POST['session']);
+
+    $table_html = '';
+
+    $bar_labels = [];
+    $bar_data   = [];
+
+    $excellent = 0;
+    $good      = 0;
+    $average   = 0;
+    $poor      = 0;
+
+    // ================= COLLEGE =================
+
+    if($institute_type == 'college'){
+
+        $course_id = $_POST['course_id'];
+        $branch_id = $_POST['branch_id'];
+        $semester  = $_POST['semester'];
+
+        $condition = "
+        ts.course_id='$course_id'
+        AND ts.branch_id='$branch_id'
+        AND ts.semester='$semester'
+        ";
+    }
+
+    // ================= SCHOOL =================
+
+    else{
+
+        $class_id   = $_POST['class_id'];
+        $section_id = $_POST['section_id'];
+
+        $condition = "
+        ts.class_id='$class_id'
+        AND ts.section_id='$section_id'
+        ";
+    }
+
+$query = mysqli_query($con,"
+
+SELECT 
+
+    ts.subject_id,
+    sub.subject_name,
+
+    tf.teacher_id,
+
+    u.name AS teacher_name,
+
+    ROUND(AVG(mt.rating),2) AS avg_rating
+
+FROM teacher_subjects ts
+
+LEFT JOIN subjects sub
+ON sub.id = ts.subject_id
+
+LEFT JOIN teacher_feedback tf
+ON tf.teacher_id = ts.teacher_id
+AND tf.session = '$session'
+
+LEFT JOIN meta_teacher mt
+ON mt.feedback_id = tf.id
+AND mt.subject_id = ts.subject_id
+
+LEFT JOIN users u
+ON u.id = ts.teacher_id
+
+WHERE 
+
+$condition
+
+AND ts.session_id = '$session'
+AND ts.institute_id = '$institute_id'
+
+GROUP BY ts.subject_id, ts.teacher_id
+
+ORDER BY avg_rating DESC
+
+");
+
+    if(mysqli_num_rows($query) > 0){
+
+        $i = 1;
+
+        while($row = mysqli_fetch_assoc($query)){
+
+            $avg = $row['avg_rating'];
+
+            if($avg >= 4){
+
+                $level = 'Excellent';
+                $excellent++;
+
+            }elseif($avg >= 3){
+
+                $level = 'Good';
+                $good++;
+
+            }elseif($avg >= 2){
+
+                $level = 'Average';
+                $average++;
+
+            }else{
+
+                $level = 'Poor';
+                $poor++;
+            }
+
+            $table_html .= '
+            <tr>
+
+                <td>'.$i++.'</td>
+
+                <td>'.$row['subject_name'].'</td>
+
+                <td>'.$row['teacher_name'].'</td>
+
+                <td>'.$row['teacher_id'].'</td>
+
+                <td>'.$avg.'</td>
+
+                <td>'.$level.'</td>
+
+            </tr>';
+
+
+
+            $bar_labels[] = $row['subject_name'];
+            $bar_data[]   = $avg;
+
+        }
+
+    }else{
+
+        $table_html = '
+        <tr>
+            <td colspan="6" class="text-center text-danger">
+                No Record Found
+            </td>
+        </tr>';
+    }
+
+    echo json_encode([
+
+        'table_html' => $table_html,
+
+        'bar_labels' => $bar_labels,
+        'bar_data'   => $bar_data,
+
+        'pie_labels' => [
+            'Excellent',
+            'Good',
+            'Average',
+            'Poor'
+        ],
+
+        'pie_data' => [
+            $excellent,
+            $good,
+            $average,
+            $poor
+        ]
+
+    ]);
+
+    exit;
+}
+
 // upload the marks inside yteh system 
 if(!empty($_POST['action']) && $_POST['action'] == 'save_marks'){
 
     $class_id   = $_POST['res_class'] ?? '';
     $section_id = $_POST['res_section'] ?? '';
     $subject_id = $_POST['res_subject'] ?? '';
+    $term_id=$_POST['res_term'] ?? '';
     $marks      = $_POST['marks'] ?? [];
 
-    if(empty($class_id) || empty($section_id) || empty($subject_id)){
+    if(empty($class_id) || empty($section_id) || empty($subject_id) || empty($term_id)){
         echo json_encode([
             "status"=>false,
             "message"=>"Please select class/section/subject"
@@ -723,28 +1383,37 @@ if(!empty($_POST['action']) && $_POST['action'] == 'save_marks'){
         "SELECT result_id FROM result
          WHERE class_id=?
          AND section_id=?
-         AND subject_id=?"
+         AND subject_id=?
+         AND term_id=?"
     );
-$check->bind_param("iii",$class_id,$section_id,$subject_id);
+$check->bind_param("iiii",$class_id,$section_id,$subject_id,$term_id);
 $check->execute();
 $check_result=$check->get_result();
     if($check_result->num_rows > 0){
         $row = $check_result->fetch_assoc();
         $result_id = $row['result_id'];
     } else {
+      $check->close();
        $stmt= $con->prepare(
-            "INSERT INTO result (class_id,section_id,subject_id)
-             VALUES(?,?,?)"
+            "INSERT INTO result (class_id,section_id,subject_id,term_id)
+             VALUES(?,?,?,?)"
         );
-        $stmt->bind_param("iii",$class_id,$section_id,$subject_id);
+        $stmt->bind_param("iiii",$class_id,$section_id,$subject_id,$term_id);
         $stmt->execute();
+        if($stmt->error){
+          echo $stmt->error;
+          exit;
+        }
         //$stmt_result=$stmt->get_result();
-        $result_id = mysqli_insert_id($con);
+        $result_id = $stmt->insert_id;
+       
     }
 
     // 2️⃣ Insert or Update Marks
+    // print_r($_POST);
+    // exit;
     foreach($marks as $student_id => $mark){
-
+$mark=(int)$mark;
         $exist =$con->prepare(
             "SELECT id FROM result_marks
              WHERE result_id=?
@@ -764,7 +1433,7 @@ $check_result=$check->get_result();
             );
 $stpt->bind_param("iii",$mark,$result_id,$student_id);
 $stpt->execute();
-$stpt_result=$stpt->get_result();
+
 
         } else {
 
@@ -785,3 +1454,17 @@ $stpt_result=$stpt->get_result();
     ]);
     exit;
 }
+
+// // get subject 
+// if(!empty($_POST['action']) && $_POST['action']=='get_subjects'){ 
+//   $exam_id = $_POST['exam_id'] ?? '';
+//   $exam_q = mysqli_query($con," SELECT semester_id FROM create_exam WHERE id='$exam_id' LIMIT 1 ");
+//   $exam = mysqli_fetch_assoc($exam_q); 
+//   $semester = $exam['semester_id'] ?? '';
+//   $sub_q = mysqli_query($con," SELECT id, name FROM courses WHERE semester='$semester' "); 
+//   echo "<option value=''>--Select Subject--</option>"; 
+//   while($sub = mysqli_fetch_assoc($sub_q)){ 
+//     echo "<option value='{$sub['id']}'>{$sub['name']}</option>"; 
+//     } 
+//     exit;
+//      }

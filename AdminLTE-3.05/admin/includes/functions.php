@@ -1,12 +1,10 @@
 <?php
-
+require_once(__DIR__ . '/config.php');
 if (!function_exists('get_the_teachers')) {
     function get_the_teachers() {
         // function body
     }
 }
-
-
 function get_timetable($day,$period_id,$class_id,$section_id){
     global $con;
     $select="SELECT p.id FROM posts p 
@@ -14,7 +12,7 @@ function get_timetable($day,$period_id,$class_id,$section_id){
     INNER JOIN metadata m2 ON m2.item_id=p.id AND m2.meta_key='period_id' AND m2.meta_value=?
     INNER JOIN metadata m3 ON m3.item_id=p.id AND m3.meta_key='class' AND m3.meta_value=?
        INNER JOIN metadata m4 ON m4.item_id=p.id AND m4.meta_key='section' AND m4.meta_value=?
-       WHERE p.type='timetable' AND p.status='publish'
+       WHERE p.type='timetable'
     ";
     $stmt=$con->prepare($select);
     $stmt->bind_param("siii",$day,$period_id,$class_id,$section_id);
@@ -56,13 +54,9 @@ function get_timetable($day,$period_id,$class_id,$section_id){
             }
             return $data;
             echo $sql;
-print_r($values);
-exit;
+// print_r($values);
+// exit;
         }
-    
-
-
-
 function get_the_classes()
 {
 
@@ -283,6 +277,44 @@ $output[$result->meta_key]=$result->meta_value;
    return $output;
   
 }
+// dynamic architecture
+function save_dynamic_fields($user_id, $form_type){
+    global $con;
+
+    $inst_id = $_SESSION['institute_id']; // ✅ direct session se le
+
+    $fields = mysqli_query($con,
+    "SELECT * FROM fields WHERE institute_id='$inst_id' AND form_type='$form_type'");
+
+    while($field = mysqli_fetch_assoc($fields)){
+        $key = $field['field_key'];
+
+        if(isset($_POST[$key]) && $_POST[$key] != ''){
+            $value = htmlspecialchars($_POST[$key], ENT_QUOTES, 'UTF-8');
+
+            $stmt = $con->prepare("INSERT INTO usermeta (user_id, meta_key, meta_value) VALUES (?,?,?)");
+            $stmt->bind_param("iss",$user_id,$key,$value);
+            $stmt->execute();
+        }
+    }
+}
+
+function get_dynamic_fields($form_type){
+    global $con;
+    $inst_id = $_SESSION['institute_id'] ?? 0;
+
+    $sql = "SELECT * FROM fields WHERE form_type='$form_type' AND institute_id='$inst_id'";
+
+    $res = mysqli_query($con, $sql);
+
+    if(!$res){
+        // safe debug
+       // echo "<!-- SQL ERROR: ".mysqli_error($con)." -->";
+        return false;
+    }
+
+    return $res; // ✅ same result return
+}
 function get_usermeta($user_id, $meta_key, $single = true)
 {
     global $con;
@@ -361,17 +393,17 @@ $check=$result->num_rows;
   }
     }
 }
-function update_attendance($item_id,$meta_key,$meta_value){
-    global $con;
-    $select=mysqli_query($con,"SELECT * FROM `attendance1` WHERE item_id=$item_id AND meta_key='$meta_key'");
-    $check=mysqli_num_rows($select);
-    if($check>0){
-        return mysqli_query($con,"UPDATE `attendance1` SET meta_value='$meta_value' WHERE item_id='$item_id' AND meta_key='$meta_key'");
+// function update_attendance($item_id,$meta_key,$meta_value){
+//     global $con;
+//     $select=mysqli_query($con,"SELECT * FROM `attendance1` WHERE item_id=$item_id AND meta_key='$meta_key'");
+//     $check=mysqli_num_rows($select);
+//     if($check>0){
+//         return mysqli_query($con,"UPDATE `attendance1` SET meta_value='$meta_value' WHERE item_id='$item_id' AND meta_key='$meta_key'");
           
-    }
+//     }
   
-    return false;
-}
+//     return false;
+// }
 function get_parent($user_id,$meta_key,$single=true){
     global $con;
     if(empty($user_id) || empty($meta_key)){
@@ -426,5 +458,193 @@ function insert_section_meta($class_id,$section_id,$con){
       $meta_section='section';
 $sql->bind_param("isi",$class_id,$meta_section,$section_id);
 $sql->execute();
+}
+
+function updateSemesterAttendance(
+    $student_id,
+    $course_id,
+    $branch_id,
+    $session_id,
+    $semester
+){
+
+    global $con;
+
+    // TOTAL + PRESENT COUNT
+    $query = mysqli_query($con, "
+
+    SELECT
+
+    COUNT(am.id) as total_class,
+
+    SUM(
+        CASE
+        WHEN am.status='present' THEN 1
+        ELSE 0
+        END
+    ) as present_class
+
+    FROM attendance att
+
+    JOIN attendance_meta am
+    ON att.id = am.attendance_id
+
+    WHERE am.user_id='$student_id'
+
+    AND att.course_id='$course_id'
+    AND att.branch_id='$branch_id'
+    AND att.session_id='$session_id'
+    AND att.semester='$semester'
+
+    ");
+
+    $row = mysqli_fetch_assoc($query);
+
+    $total_class = $row['total_class'] ?? 0;
+
+    $present_class = $row['present_class'] ?? 0;
+
+    $absent_class = $total_class - $present_class;
+
+    $percentage = 0;
+
+    if($total_class > 0){
+
+        $percentage = ($present_class / $total_class) * 100;
+    }
+
+    // CHECK EXIST
+    $check = mysqli_query($con, "
+
+    SELECT id FROM semester_attendance
+
+    WHERE student_id='$student_id'
+    AND course_id='$course_id'
+    AND branch_id='$branch_id'
+    AND session_id='$session_id'
+    AND semester='$semester'
+
+    ");
+
+    if(mysqli_num_rows($check) > 0){
+
+        // UPDATE
+        mysqli_query($con, "
+
+        UPDATE semester_attendance SET
+
+        total_class='$total_class',
+        present_class='$present_class',
+        absent_class='$absent_class',
+        attendance_percentage='$percentage'
+
+        WHERE student_id='$student_id'
+        AND course_id='$course_id'
+        AND branch_id='$branch_id'
+        AND session_id='$session_id'
+        AND semester='$semester'
+
+        ");
+
+    } else {
+
+        // INSERT
+        mysqli_query($con, "
+
+        INSERT INTO semester_attendance(
+
+        student_id,
+        course_id,
+        branch_id,
+        session_id,
+        semester,
+
+        total_class,
+        present_class,
+        absent_class,
+        attendance_percentage
+
+        ) VALUES (
+
+        '$student_id',
+        '$course_id',
+        '$branch_id',
+        '$session_id',
+        '$semester',
+
+        '$total_class',
+        '$present_class',
+        '$absent_class',
+        '$percentage'
+
+        )
+
+        ");
+    }
+}
+
+function renderFields($form_type,$con)
+{
+   $query=mysqli_query($con,"
+   SELECT * FROM fields
+   WHERE form_type='$form_type'
+   AND visibility=1
+   ");
+
+   while($field=mysqli_fetch_assoc($query))
+   {
+      $label=$field['field_name'];
+      $name=$field['field_key'];
+      $type=$field['field_type'];
+
+      echo '<div class="form-group">';
+      echo '<label>'.$label.'</label>';
+
+      // TEXT
+      if($type=='text')
+      {
+         echo '<input type="text" 
+         name="'.$name.'" 
+         class="form-control">';
+      }
+
+      // TEXTAREA
+      if($type=='textarea')
+      {
+         echo '<textarea 
+         name="'.$name.'" 
+         class="form-control"></textarea>';
+      }
+
+      // SELECT
+      if($type=='select')
+      {
+         echo '<select 
+         name="'.$name.'" 
+         class="form-control">';
+
+         echo '<option value="">Select</option>';
+
+         echo '</select>';
+      }
+
+      echo '</div>';
+   }
+}
+function sidebarMenu($url,$icon,$title)
+{
+?>
+<li class="nav-item">
+
+    <a href="<?=$url?>" class="nav-link">
+
+        <i class="<?=$icon?> nav-icon"></i>
+
+        <p><?=$title?></p>
+
+    </a>
+
+</li>
+<?php
 }
 ?>

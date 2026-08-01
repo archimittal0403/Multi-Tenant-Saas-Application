@@ -27,11 +27,30 @@ if(isset($_POST['verify_otp'])){
     if($result->num_rows > 0){
         // OTP correct
        $user = $result->fetch_assoc();  
-        $_SESSION['login'] = true;         // MUST
-        $_SESSION['user_type'] = 'admin';  // ya jo type hai DB me
+        $_SESSION['login'] = true;  
+        $_SESSION['otp_verified']=true;       // MUST
+       $_SESSION['user_type'] = strtolower($user['type']);
+   
       
         $_SESSION['user_id'] = $user['id']; // optional
-          $_SESSION['college_id'] = $user['college_id'];   // 🔥 ADD THIS
+          $_SESSION['institute_id'] = $user['institute_id']; 
+          if($_SESSION['user_type'] == "super_admin"){
+
+    // Super Admin के लिए institute select page
+    header("Location: select_institute.php");
+    exit();
+}
+        // 🔥 GET system_type from institutes table
+$institute_id = $user['institute_id'];
+
+$query = $con->prepare("SELECT system_type,institute_code FROM institutes WHERE id=?");
+$query->bind_param("i", $institute_id);
+$query->execute();
+$res = $query->get_result();
+$inst = $res->fetch_assoc();
+
+$_SESSION['system_type'] = $inst['system_type'] ?? '';
+$_SESSION['institute_code']=$inst['institute_code'] ?? '';
         // delete OTP
         $stmt2 = $con->prepare("UPDATE accounts SET user_otp=NULL WHERE email=?");
         $stmt2->bind_param("s", $user_email);
@@ -41,9 +60,19 @@ if(isset($_POST['verify_otp'])){
         if(isset($_POST['remember'])){
             setcookie("email","$user_email",time()+86400,"/");
         }
-
-        header("Location: dashboard.php");  // redirect
-        exit();
+$institute_id=$_SESSION['institute_id'];
+$query=mysqli_query($con,"SELECT is_setup_done FROM `institutes` WHERE id='$institute_id'");
+$data=mysqli_fetch_assoc($query);
+if($data['is_setup_done']==0){
+    header("Location: setup.php");
+    exit;
+}
+else{
+ header("Location: dashboard.php");  // redirect
+        exit();   
+}
+       // header("Location: dashboard.php");  // redirect
+      //  exit();
     } else {
         $_SESSION['error_msg'] = "Invalid OTP";
         header("Location: login.php");
@@ -55,60 +84,211 @@ if(isset($_POST['verify_otp'])){
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login </title>
-    <!-- bootstrap css link  -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
-  
-    <!-- fontawesome link -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify OTP - IRISERP</title>
 
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    
-<div class="container-fluid m-3">
-    <h2 class="text-center mb-4 mt-5">Enter your OTP</h2>
-    <div class=" row d-flex justify-content-center align-item-center">
-        <div class="col-lg-6">
-            <img src="../assest/images/admin_regis.jpg" alt="adin registration" class="img-fluid">
-</div>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<div class="col-lg-6">
-  <div class="alert alert-primary w-50 " role="alert">
-    <?php
-    if(isset($_REQUEST['msg'])){
-      echo $_REQUEST['msg'];
+<style>
+
+body{
+    margin:0;
+    padding:0;
+    min-height:100vh;
+    background: linear-gradient(135deg,#0f172a,#1e293b,#2563eb);
+    font-family: 'Poppins', sans-serif;
+
+    overflow-x:hidden;
+    overflow-y:auto;
+}
+
+
+/* blur circles */
+.blur-circle{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(80px);
+    opacity:.4;
+}
+
+.circle1{
+    width:300px;
+    height:300px;
+    background:#3b82f6;
+    top:-100px;
+    left:-100px;
+}
+
+.circle2{
+    width:250px;
+    height:250px;
+    background:#9333ea;
+    bottom:-80px;
+    right:-80px;
+}
+
+/* card */
+.otp-card{
+    width:100%;
+    max-width:450px;
+    border-radius:24px;
+    backdrop-filter: blur(18px);
+    background:rgba(255,255,255,0.10);
+    border:1px solid rgba(255,255,255,0.15);
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+    padding:30px;
+    color:#fff;
+}
+
+/* title */
+.title{
+    font-size:28px;
+    font-weight:700;
+    text-align:center;
+}
+
+.subtitle{
+    text-align:center;
+    font-size:14px;
+    color:#cbd5e1;
+    margin-bottom:20px;
+}
+
+/* input */
+.form-control{
+    height:52px;
+    border-radius:12px;
+    border:none;
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+}
+
+.form-control::placeholder{
+    color:#cbd5e1;
+}
+
+.form-control:focus{
+    background:rgba(255,255,255,0.18);
+    border:1px solid #60a5fa;
+    box-shadow:none;
+    color:#fff;
+}
+
+/* button */
+.btn-verify{
+    width:100%;
+    height:50px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(to right,#2563eb,#3b82f6);
+    color:#fff;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.btn-verify:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(59,130,246,0.4);
+}
+
+/* checkbox */
+.form-check-label{
+    color:#cbd5e1;
+}
+
+.alert-box{
+    font-size:14px;
+}
+.form-control{
+    font-size:18px;
+    letter-spacing:6px;
+    text-align:center;
+}
+.btn-verify{
+    height:52px;
+    font-size:16px;
+}
+@media(max-width:576px){
+
+    .otp-card{
+        margin:15px;
+        padding:22px;
+        border-radius:18px;
     }
-    ?>
+
+    .title{
+        font-size:22px;
+    }
+
+    .subtitle{
+        font-size:12px;
+    }
+
+    .blur-circle{
+        display:none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="blur-circle circle1"></div>
+<div class="blur-circle circle2"></div>
+
+<div class="container h-100">
+<div class="row justify-content-center align-items-center min-vh-100 py-4">
+
+    <div class="col-lg-5 col-md-8">
+
+        <div class="otp-card">
+
+            <div class="title">OTP Verification</div>
+            <div class="subtitle">Enter the OTP sent to your registered email</div>
+
+            <!-- ALERT -->
+            <?php if(isset($_REQUEST['msg'])){ ?>
+                <div class="alert alert-danger text-center alert-box">
+                    <?php echo $_REQUEST['msg']; ?>
+                </div>
+            <?php } ?>
+
+            <form action="verify.php" method="post">
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Enter OTP</label>
+                 <input type="number"
+                           name="user_otp"
+                           class="form-control"
+                           placeholder="6 digit OTP"
+                           required
+                           autocomplete="off">
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" name="remember">
+                    <label class="form-check-label">Remember Me</label>
+                </div>
+
+                <button type="submit" name="verify_otp" class="btn-verify">
+                    Verify OTP
+                </button>
+
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="login.php" style="color:#bfdbfe;text-decoration:none;">
+                    ← Back to Login
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 </div>
 
-    <form action="verify.php" method="post">
-      
-        <div class="form-outline mb-4 mt-5">
-<label for="email" class="form-label">OTP :-</label>
-<input type="number" id="user_otp" name="user_otp" placeholder="Enter the otp" required="required"   autocomplete="off" class="form-control w-50 ">
-</div>
-<input type="checkbox" name="remember">Remember Me
-
-<div class="form-outline mb-4">
-<input type="submit" class="bg-success  py-2 px-3 border-0 text-light" name="verify_otp" value="verify otp">
-
-
-   
-
-
- 
-
-
-</form>
-
-</div>
-</div>
-</div>
 </body>
 </html>
-
- 
