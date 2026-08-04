@@ -1,6 +1,11 @@
+[![PHP](https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php)]()
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1?logo=mysql)]()
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
+[![Multi-Tenant SaaS](https://img.shields.io/badge/Architecture-Multi--Tenant-success)]()
 # IRISERP – Dynamic Multi-Tenant SaaS ERP System
 
-**IRISERP** is a dynamic **Multi-Tenant ERP / Student Management System** developed using **PHP, MySQL, Bootstrap, JavaScript, AJAX, Python, and Flask**. The system is designed for both **Schools and Colleges** and can adapt to different institute structures **without changing a single line of code**.
+IRISERP is a **Multi-Tenant ERP and Student Management System** built with **PHP, MySQL, Bootstrap, AJAX, Python, and Flask**. It supports **both Schools and Colleges from a single codebase** and dynamically adapts its academic structure without requiring code changes.
 
 ---
 
